@@ -1,0 +1,19 @@
+[
+  {
+    "outputFileName": "wwwroot/css/bundle.min.css",
+    "inputFiles": [
+      "wwwroot/css/site.css",
+      "wwwroot/css/main_style.css",
+      "wwwroot/css/menu.css"
+
+    ]
+  },
+  {
+    "outputFileName": "wwwroot/js/bundle.min.js",
+    "inputFiles": [
+      "wwwroot/js/menu.js",
+      "wwwroot/js/site.js"
+    ],
+    "minify": { "enabled": true }
+  }
+]

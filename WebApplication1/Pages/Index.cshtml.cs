@@ -23,7 +23,7 @@ namespace WebApplication1.Pages
         }
 
 
-        // Новый метод для AJAX-запроса
+        //  метод для AJAX-запроса
         public IActionResult OnGetCurrentTime()
         {
             return new JsonResult(new { time = DateTime.Now.ToLongTimeString() });
@@ -41,6 +41,37 @@ namespace WebApplication1.Pages
         };
 
             return new JsonResult(searchResults);
+        }
+
+
+        public JsonResult OnGetCategories()
+        {
+            // Пример данных - в реальности вы будете получать их из БД
+            var categories = new List<Category>
+            {
+                new Category { Id = 1, Name = "Продукты", ParentId = -1 },
+                new Category { Id = 2, Name = "Мясо", ParentId = 1 },
+                new Category { Id = 3, Name = "Овощи", ParentId = 1 },
+                new Category { Id = 4, Name = "Электроника", ParentId = -1 },
+                new Category { Id = 5, Name = "Ноутбуки", ParentId = 4 },
+                new Category { Id = 6, Name = "Телефоны", ParentId = 4 },
+                new Category { Id = 10, Name = "Apple", ParentId = 6 },
+                new Category { Id = 11, Name = "Sumsung", ParentId = 6 },
+                new Category { Id = 12, Name = "Honor", ParentId = 6 },
+
+                new Category { Id = 7, Name = "Молочные продукты", ParentId = 1 },
+                new Category { Id = 9, Name = "Без категории", ParentId = -1 },
+            };
+
+            return new JsonResult(categories);
+
+        }
+
+        public class Category
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+            public int ParentId { get; set; }
         }
 
         public class Product

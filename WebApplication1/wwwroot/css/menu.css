@@ -1,0 +1,64 @@
+﻿/* Стили для динамического меню категорий */
+#categoriesMenu {
+    max-height: 80vh;
+    overflow-y: auto;
+    padding-left: 0; /* Добавлено: убираем отступ слева у основного контейнера */
+    margin: 0; /* Добавлено: убираем внешние отступы */
+}
+
+    #categoriesMenu ul {
+        list-style: none !important; /* Гарантированно убираем маркеры */
+        padding-left: 15px;
+        margin: 5px 0;
+    }
+
+    #categoriesMenu li {
+        margin: 3px 0;
+        list-style: none; /* Добавлено: убираем маркеры у элементов списка */
+    }
+
+.category-link {
+    display: block;
+    padding: 8px 10px 8px 20px; /* Увеличиваем padding слева для иконок */
+    color: #333;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.2s;
+    position: relative;
+}
+
+    .category-link:hover {
+        background-color: #e9ecef;
+        color: #0056b3;
+    }
+
+    /* Иконки для категорий */
+    .category-link::before {
+        content: "→";
+        position: absolute; /* Абсолютное позиционирование иконки */
+        left: 0px; /* Положение иконки */
+        top: 50%;
+        transform: translateY(-50%);
+        margin-right: 8px;
+        font-size: 0.8em;
+        color: #6c757d;
+        transition: all 0.2s;
+    }
+
+.category-item.has-children > .category-link::before {
+    content: "▷"; /* Используем треугольник вместо стрелки */
+}
+
+.category-item.has-children.open > .category-link::before {
+    content: "▼";
+    transform: translateY(-50%) rotate(0deg); /* Обновляем transform */
+}
+
+.subcategory-list {
+    display: none;
+    padding-left: 20px; /* Увеличиваем отступ для вложенных списков */
+}
+
+.category-item.open > .subcategory-list {
+    display: block;
+}
