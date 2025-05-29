@@ -55,9 +55,25 @@ body {
     color: #666;
 }
 
-
-
-/*body {
+.container_serch {
+    width: 100%; /* или любая другая ширина */
+    height: 50px; /* высота контейнера */
+    padding: 0; /* убираем внутренние отступы */
+}
+.serch_field {
+    width: 100%; /* занимает всю ширину родителя */
+    height: 100%; /* занимает всю высоту родителя */
+    box-sizing: border-box; /* учитываем padding и border в ширине */
+    border-radius: 25px; /* скругляем края - половина высоты input */
+    padding: 10px 15px; /* внутренние отступы для текста */
+    border: 1px solid #ccc; /* граница */
+    font-size: 16px; /* размер шрифта */
+    outline: none; /* убираем обводку при фокусе */
+}
+.serch_field {
+    border-color: #66afe9; /* цвет границы при фокусе */
+}
+    /*body {
     font-family: 'Arial', sans-serif;
     max-width: 800px;
     margin: 0 auto;
