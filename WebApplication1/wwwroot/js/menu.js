@@ -23,25 +23,32 @@ function loadCategories() {
 
 // Функция рендеринга категорий
 function renderCategories(categories) {
+    if (!Array.isArray(categories)) {
+        console.error('Categories data is not an array');
+        return;
+    }
+
+    // Удаляем дубликаты по id
+    const uniqueCategories = categories.filter(
+        (cat, index, self) => self.findIndex(c => c.id === cat.id) === index
+    );
+
     const menuContainer = document.getElementById('categoriesMenu');
     menuContainer.innerHTML = '';
 
-    // Создаем хэш-таблицу для быстрого доступа
+    // Создаем хэш-таблицу и заполняем children
     const categoriesMap = {};
     categories.forEach(cat => {
-        categoriesMap[cat.id] = cat;
-        cat.children = []; // Добавляем массив для детей
+        categoriesMap[cat.id] = { ...cat, children: [] };
     });
 
     // Строим иерархию
     const rootCategories = [];
     categories.forEach(cat => {
         if (cat.parentId === -1) {
-            rootCategories.push(cat);
-        } else {
-            if (categoriesMap[cat.parentId]) {
-                categoriesMap[cat.parentId].children.push(cat);
-            }
+            rootCategories.push(categoriesMap[cat.id]);
+        } else if (categoriesMap[cat.parentId]) {
+            categoriesMap[cat.parentId].children.push(categoriesMap[cat.id]);
         }
     });
 
@@ -50,9 +57,9 @@ function renderCategories(categories) {
         menuContainer.appendChild(createCategoryElement(category));
     });
 }
-
 // Рекурсивная функция создания элемента категории
 function createCategoryElement(category) {
+
     const li = document.createElement('li');
     li.className = 'category-item';
 
@@ -61,42 +68,36 @@ function createCategoryElement(category) {
     link.className = 'category-link';
     link.textContent = category.name;
     link.setAttribute('data-category-id', category.id);
+
+    // Один обработчик для всех действий
     link.addEventListener('click', function (e) {
         e.preventDefault();
-        loadProductsByCategory(category.id);
+        if (category.children && category.children.length > 0) {
+            li.classList.toggle('open');
+        } else {
+            loadProductsByCategory(category.id);
+        }
     });
 
     li.appendChild(link);
 
-    if (category.children && category.children.length > 0) {
-        const subList = document.createElement('ul');
-        subList.className = 'subcategory-list';
-
-        category.children.forEach(child => {
-            subList.appendChild(createCategoryElement(child));
-        });
-
-        li.appendChild(subList);
-    }
-    // Добавляем логику для сворачивания/разворачивания подкатегорий
+    // Добавляем подкатегории только если они есть
     if (category.children && category.children.length > 0) {
         li.classList.add('has-children');
 
-        // Добавляем обработчик для toggle подкатегорий
-        link.addEventListener('click', function (e) {
-            e.preventDefault();
-            li.classList.toggle('open');
-        });
-
         const subList = document.createElement('ul');
         subList.className = 'subcategory-list';
 
-        category.children.forEach(child => {
+        // Убедимся, что children - массив уникальных элементов
+        const uniqueChildren = Array.from(new Set(category.children.map(c => c.id)))
+            .map(id => category.children.find(c => c.id === id));
+
+        uniqueChildren.forEach(child => {
             subList.appendChild(createCategoryElement(child));
         });
 
         li.appendChild(subList);
     }
+
     return li;
 }
-
