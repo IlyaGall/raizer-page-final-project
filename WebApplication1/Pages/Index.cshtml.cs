@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Model.Product;
+using Model.Cluster;
 
 namespace WebApplication1.Pages
 {
@@ -23,30 +25,40 @@ namespace WebApplication1.Pages
         }
 
 
-        //  метод для AJAX-запроса
+        /// <summary>
+        /// метод для AJAX-запроса для часиков
+        /// </summary>
+        /// <returns></returns>
         public IActionResult OnGetCurrentTime()
         {
             return new JsonResult(new { time = DateTime.Now.ToLongTimeString() });
         }
 
+        /// <summary>
+        /// Обработка поискового запроса на странице index
+        /// </summary>
+        /// <param name="query"></param>
+        /// <returns></returns>
         public JsonResult OnGetSearch(string query)
         {
             // Здесь реализуйте логику поиска товаров
             // Пример:
             var searchResults = new List<Product>
-        {
-            new Product { Id = 1, Name = query + " 1", Description = "Описание " + query + " 1", Price = 100 },
-            new Product { Id = 2, Name = query + " 2", Description = "Описание " + query + " 2", Price = 200 },
-            new Product { Id = 3, Name = query + " 3", Description = "Описание " + query + " 3", Price = 300 }
-        };
+            {
+                new Product { Id = 1, Name = query + " 1", Description = "Описание " + query + " 1", Price = 100 },
+                new Product { Id = 2, Name = query + " 2", Description = "Описание " + query + " 2", Price = 200 },
+                new Product { Id = 3, Name = query + " 3", Description = "Описание " + query + " 3", Price = 300 }
+            };
 
             return new JsonResult(searchResults);
         }
 
-
+        /// <summary>
+        /// Запрос к категориям товара для меню
+        /// </summary>
+        /// <returns></returns>
         public JsonResult OnGetCategories()
         {
-            // Пример данных - в реальности вы будете получать их из БД
             var categories = new List<Category>
             {
                 new Category { Id = 1, Name = "Продукты", ParentId = -1 },
@@ -67,27 +79,15 @@ namespace WebApplication1.Pages
 
         }
 
-        public class Category
-        {
-            public int Id { get; set; }
-            public string Name { get; set; }
-            public int ParentId { get; set; }
-        }
-
-        public class Product
-        {
-            public int Id { get; set; }
-            public string Name { get; set; }
-            public string Description { get; set; }
-            public decimal Price { get; set; }
-        }
-
+       
+        /// <summary>
+        /// Получить продукты по id кластеру
+        /// </summary>
+        /// <param name="categoryId">id кластера</param>
+        /// <returns></returns>
         public JsonResult OnGetProductsByCategory(int categoryId)
         {
-            // Здесь реализуйте логику получения товаров по категории
-            // Пример:
             var products = new List<Product>();
-
             if (categoryId == 2) // Мясо
             {
                 products.AddRange(new List<Product>

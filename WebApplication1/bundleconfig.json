@@ -11,8 +11,12 @@
   {
     "outputFileName": "wwwroot/js/bundle.min.js",
     "inputFiles": [
-      "wwwroot/js/menu.js",
-      "wwwroot/js/site.js"
+      "wwwroot/js/Menu.js",
+      "wwwroot/js/site.js",
+      "wwwroot/js/Clock.js",
+      "wwwroot/js/SerchElemts.js"
+
+
     ],
     "minify": { "enabled": true }
   }
