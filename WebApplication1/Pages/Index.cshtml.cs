@@ -82,6 +82,43 @@ namespace WebApplication1.Pages
             public decimal Price { get; set; }
         }
 
+        public JsonResult OnGetProductsByCategory(int categoryId)
+        {
+            // Здесь реализуйте логику получения товаров по категории
+            // Пример:
+            var products = new List<Product>();
+
+            if (categoryId == 2) // Мясо
+            {
+                products.AddRange(new List<Product>
+                {
+                    new Product { Id = 101, Name = "Говядина", Description = "Свежая говядина", Price = 500 },
+                    new Product { Id = 102, Name = "Свинина", Description = "Свежая свинина", Price = 450 }
+                });
+            }
+            else if (categoryId == 3) // Овощи
+            {
+                products.AddRange(new List<Product>
+                {
+                    new Product { Id = 201, Name = "Морковь", Description = "Свежая морковь", Price = 50 },
+                    new Product { Id = 202, Name = "Картофель", Description = "Свежий картофель", Price = 40 }
+                });
+            }
+            else if (categoryId == 9) // Без категории
+            {
+                products.AddRange(new List<Product>
+                {
+                    new Product { Id = 301, Name = "Товар без категории 1", Description = "Описание", Price = 100 },
+                    new Product { Id = 302, Name = "Товар без категории 2", Description = "Описание", Price = 200 }
+                });
+            }
+            return new JsonResult(products);
+        }
+
+
+
+
+
 
     }
 }
