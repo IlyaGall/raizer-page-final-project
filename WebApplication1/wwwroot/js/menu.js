@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Функция загрузки категорий
 function loadCategories() {
-    fetch('?handler=Categories')
+    fetch('?handler=Categories')    
         .then(response => response.json())
         .then(data => {
             renderCategories(data);
@@ -23,40 +23,49 @@ function loadCategories() {
 
 // Функция рендеринга категорий
 function renderCategories(categories) {
-    if (!Array.isArray(categories)) {
-        console.error('Categories data is not an array');
-        return;
-    }
-
-    // Удаляем дубликаты по id
-    const uniqueCategories = categories.filter(
-        (cat, index, self) => self.findIndex(c => c.id === cat.id) === index
-    );
+    if (!Array.isArray(categories)) return;
 
     const menuContainer = document.getElementById('categoriesMenu');
     menuContainer.innerHTML = '';
 
-    // Создаем хэш-таблицу и заполняем children
-    const categoriesMap = {};
-    categories.forEach(cat => {
-        categoriesMap[cat.id] = { ...cat, children: [] };
+    // 1. Удаляем дубликаты по ID
+    const uniqueCategories = [...new Map(categories.map(cat => [cat.id, cat])).values()];
+
+    // 2. Создаем хэш-таблицу и копируем все категории
+    const categoriesMap = new Map();
+    uniqueCategories.forEach(cat => {
+        // Создаем полную копию объекта категории
+        categoriesMap.set(cat.id, JSON.parse(JSON.stringify(cat)));
     });
 
-    // Строим иерархию
+    // 3. Строим иерархию
     const rootCategories = [];
-    categories.forEach(cat => {
+    categoriesMap.forEach(cat => {
         if (cat.parentId === -1) {
-            rootCategories.push(categoriesMap[cat.id]);
-        } else if (categoriesMap[cat.parentId]) {
-            categoriesMap[cat.parentId].children.push(categoriesMap[cat.id]);
+            rootCategories.push(cat);
+        } else if (categoriesMap.has(cat.parentId)) {
+            const parent = categoriesMap.get(cat.parentId);
+            // Инициализируем children если их нет
+            if (!parent.children) parent.children = [];
+            // Проверяем на дубликаты
+            if (!parent.children.some(child => child.id === cat.id)) {
+                parent.children.push(cat);
+            }
         }
     });
 
-    // Рендерим дерево
+    // 4. Рендерим дерево
     rootCategories.forEach(category => {
         menuContainer.appendChild(createCategoryElement(category));
     });
+
+    console.log('Processed categories:', {
+        originalCount: categories.length,
+        uniqueCount: uniqueCategories.length,
+        rootCategories: rootCategories
+    });
 }
+
 // Рекурсивная функция создания элемента категории
 function createCategoryElement(category) {
 
