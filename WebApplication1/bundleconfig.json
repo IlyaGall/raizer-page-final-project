@@ -4,7 +4,10 @@
     "inputFiles": [
       "wwwroot/css/site.css",
       "wwwroot/css/main_style.css",
-      "wwwroot/css/menu.css"
+      "wwwroot/css/menu.css",
+      "wwwroot/css/Privacy_policy.css",
+      "wwwroot/css/Cart.css"
+
 
     ]
   },
@@ -14,7 +17,9 @@
       "wwwroot/js/Menu.js",
       "wwwroot/js/site.js",
       "wwwroot/js/Clock.js",
-      "wwwroot/js/SerchElemts.js"
+      "wwwroot/js/SerchElemts.js",
+      "wwwroot/js/RenderCart.js",
+      "wwwroot/js/SaveSession.js"
 
 
     ],

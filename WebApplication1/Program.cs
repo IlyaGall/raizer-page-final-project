@@ -1,3 +1,7 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
 namespace WebApplication1
 {
     public class Program
@@ -8,6 +12,25 @@ namespace WebApplication1
 
             // указываем папку из которой будем грузить страницы
             builder.Services.AddRazorPages(options => options.RootDirectory = "/Pages");
+
+            // Добавление сервисов
+            builder.Services.AddScoped<JwtService>(); // Регистрация JwtService
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+        };
+    });
+            builder.Services.AddRazorPages();
 
             var app = builder.Build();
 

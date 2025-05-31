@@ -53,33 +53,7 @@
                 });
         }
 
-        // Функция для отрисовки карточек
-        function renderCards(products) {
-            const cardsContainer = document.getElementById('cardsContainer');
-
-            products.forEach((product, index) => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <h3>${product.name}</h3>
-                    <p>${product.description}</p>
-                    <p class="price">Цена: $${product.price}</p>
-                    <a href = "https://localhost:7100/Product?id=${product.id}">Перейти</a>
-
-                `;
-
-                // Добавляем анимацию появления с задержкой
-                card.style.opacity = '0';
-                card.style.transform = 'scale(0.95)';
-                cardsContainer.appendChild(card);
-
-                setTimeout(() => {
-                    card.style.opacity = '1';
-                    card.style.transform = 'scale(1)';
-                }, index * 100);
-            });
-        }
-
+  
         // Обработчик ввода (опционально, если нужно искать при вводе)
         document.getElementById('searchInput').addEventListener('input', function(e) {
             const searchValue = e.target.value.trim();
