@@ -27,22 +27,20 @@ namespace WebApplication1.Pages
             //TODO!!!
             // Здесь должна быть логика проверки учетных данных, тут у Глеба уточнить
             // В реальном приложении проверяем в бд в базе данных
-            if (Username == "1" && Password == "1")
+                if (Username == "1" && Password == "1")
             {
                 var token = _jwtService.GenerateToken(Username, new[] { "Admin" });
 
                 // Сохраняем токен в куки
                 Response.Cookies.Append("jwt", token, new CookieOptions
                 {
-                    HttpOnly = true,
-                    Secure = true, // Только HTTPS
-                    SameSite = SameSiteMode.Lax,
-                    Expires = DateTimeOffset.Now.AddHours(1),
-                    Domain = "localhost",
-                    Path = "/"
+                    HttpOnly = false, // вот эту фигню нужно сделать false иначе js не будет работать с cookie РЕДИСКА!!!
+                    Secure = true, // Только для HTTPS
+                    SameSite = SameSiteMode.Lax, // Или Strict, если все на одном домене
+                    Expires = DateTimeOffset.Now.AddHours(1)
                 });
 
-                 return RedirectToPage("/Index");
+                return RedirectToPage("/Index");
             }
 
             ModelState.AddModelError(string.Empty, "Invalid login attempt.");

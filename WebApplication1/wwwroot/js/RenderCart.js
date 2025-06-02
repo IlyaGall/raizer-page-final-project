@@ -1,7 +1,21 @@
 ﻿
 // Функция для проверки авторизации jwt
 function isAuthenticated() {
+    alert(document.cookie.includes('jwt='));
     return document.cookie.includes('jwt=');
+}
+
+function isAuthenticated1() {
+    // Для отладки выводим все cookies
+    console.log('Все cookies:', document.cookie);
+
+    // Проверяем наличие jwt cookie
+    const cookieExists = document.cookie.split(';').some(
+        item => item.trim().startsWith('jwt=')
+    );
+
+    console.log('JWT cookie exists:', cookieExists);
+    return cookieExists;
 }
 
 //Функция отслеживания на какой странице происходит сейчас находится пользователь
@@ -58,7 +72,7 @@ function renderCards(products) {
         // Создаем кнопку избранного
         const favoriteBtn = document.createElement('button');
         favoriteBtn.className = 'favorite-btn';
-
+        isAuthenticated1();
         if (isAuthenticated()) {
             favoriteBtn.innerHTML = '❤️ Добавить в избранное';
             favoriteBtn.dataset.productId = product.id;

@@ -47,7 +47,7 @@ namespace WebApplication1
             app.UseStaticFiles();
 
             app.UseRouting();
-
+            app.UseAuthentication(); // Добавьте эту строку
             app.UseAuthorization();
 
             app.MapRazorPages();
