@@ -1,12 +1,14 @@
-﻿       // Обработчик формы
-        document.getElementById('searchForm').addEventListener('submit', function(e) {
-            e.preventDefault(); // Предотвращаем стандартную отправку формы
-            const searchValue = document.getElementById('searchInput').value.trim();
+﻿// Обработчик формы
 
-            if (searchValue.length > 0) {
-                searchProducts(searchValue);
-            }
-        });
+
+    document.getElementById('searchForm').addEventListener('submit', function (e) {
+        e.preventDefault(); // Предотвращаем стандартную отправку формы
+        const searchValue = document.getElementById('searchInput').value.trim();
+
+        if (searchValue.length > 0) {
+            searchProducts(searchValue);
+        }
+    });
 
         // Функция для поиска товаров
         function searchProducts(query) {
@@ -53,19 +55,18 @@
                 });
         }
 
-  
-        // Обработчик ввода (опционально, если нужно искать при вводе)
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            const searchValue = e.target.value.trim();
-            if (searchValue.length === 0) {
-                const initialContent = document.getElementById('initialContent');
-                const cardsContainer = document.getElementById('cardsContainer');
 
-                cardsContainer.classList.remove('visible');
-                cardsContainer.classList.add('hidden');
-                cardsContainer.innerHTML = '';
+    document.getElementById('searchInput').addEventListener('input', function (e) {
+        const searchValue = e.target.value.trim();
+        if (searchValue.length === 0) {
+            const initialContent = document.getElementById('initialContent');
+            const cardsContainer = document.getElementById('cardsContainer');
 
-                initialContent.classList.remove('hidden');
-                initialContent.classList.add('visible');
-            }
-        });
+            cardsContainer.classList.remove('visible');
+            cardsContainer.classList.add('hidden');
+            cardsContainer.innerHTML = '';
+
+            initialContent.classList.remove('hidden');
+            initialContent.classList.add('visible');
+        }
+    });

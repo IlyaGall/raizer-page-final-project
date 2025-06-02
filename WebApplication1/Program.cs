@@ -15,6 +15,7 @@ namespace WebApplication1
 
             // Добавление сервисов
             builder.Services.AddScoped<JwtService>(); // Регистрация JwtService
+         
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {

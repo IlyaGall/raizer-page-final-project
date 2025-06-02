@@ -4,71 +4,140 @@ function isAuthenticated() {
     return document.cookie.includes('jwt=');
 }
 
-// Функция для отрисовки карточек
+//Функция отслеживания на какой странице происходит сейчас находится пользователь
+//Нужно, чтобы не не запускть скрипт с привязкой к дереву
+//document.addEventListener('DOMContentLoaded', function () {
+//    const page = document.body.getAttribute('data-page');
+//    return page;
+//    alert(page);
+//    if (page === '/Index') {
+//        /* Код для конкретной страницы*/
+//    }
+//});
 
+//Функция отслеживания на какой странице происходит сейчас находится пользователь
+//Нужно, чтобы не не запускть скрипт с привязкой к дереву
+function getNamePAge() {
+    return document.body.getAttribute('data-page').toString();
+
+}
+
+// Функция для отрисовки карточек
 function renderCards(products) {
     const cardsContainer = document.getElementById('cardsContainer');
+    if (!cardsContainer) {
+        console.error('Контейнер для карточек не найден!');
+        return;
+    }
+
+    // Очищаем контейнер перед добавлением новых карточек
+    cardsContainer.innerHTML = '';
 
     products.forEach((product, index) => {
         const card = document.createElement('div');
         card.className = 'card';
 
-        const favoriteButton = isAuthenticated()
-            ? `<button class="favorite-btn" data-product-id="${product.id}">❤️ Добавить в избранное</button>`
-            : `<button disabled title="Требуется авторизация">🔒 Избранное</button>`;
+        // Создаем элементы вручную вместо innerHTML
+        const link = document.createElement('a');
+        link.href = `https://localhost:7100/Product?id=${product.id}`;
 
+        const title = document.createElement('h3');
+        title.textContent = product.name || 'Без названия';
 
-        card.innerHTML = `
-                <a href = "https://localhost:7100/Product?id=${product.id}">
-                    <h3>${product.name}</h3>
-                    <p>${product.description}</p>
-                    <p class="price">Цена: $${product.price}</p>
-                 </a>
-                 <button>Добавить в корзину</button>
-                 <button>Добавить в избранное</button>
-                  ${favoriteButton}
-                `;
+        const description = document.createElement('p');
+        description.textContent = product.description || '';
 
+        const price = document.createElement('p');
+        price.className = 'price';
+        price.textContent = `Цена: $${product.price || '0'}`;
 
-        // Добавляем анимацию появления с задержкой
-        card.style.opacity = '0';
-        card.style.transform = 'scale(0.95)';
-        cardsContainer.appendChild(card);
+        const cartBtn = document.createElement('button');
+        cartBtn.className = 'cart-btn';
+        cartBtn.textContent = 'Добавить в корзину';
 
-        // Стилизация элементов внутри ссылки
-        const link = card.querySelector('a');
+        // Создаем кнопку избранного
+        const favoriteBtn = document.createElement('button');
+        favoriteBtn.className = 'favorite-btn';
+
+        if (isAuthenticated()) {
+            favoriteBtn.innerHTML = '❤️ Добавить в избранное';
+            favoriteBtn.dataset.productId = product.id;
+
+            // Добавляем обработчик напрямую к кнопке
+            favoriteBtn.addEventListener('click', async () => {
+                try {
+                    
+                    const token = getCookie('jwt');
+                    if (!token) {
+                        alert('Требуется авторизация');
+                        return;
+                    }
+
+                    const response = await fetch('/api/favorites', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ productId: product.id })
+                    });
+
+                    if (response.ok) {
+                        alert('Товар добавлен в избранное!');
+                    } else {
+                        alert('Ошибка при добавлении в избранное');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Произошла ошибка');
+                }
+            });
+        }
+        else
+        {
+            favoriteBtn.innerHTML = '🔒 Избранное';
+            favoriteBtn.disabled = true;
+            favoriteBtn.title = 'Требуется авторизация';
+        }
+
+        // Собираем карточку
+        link.appendChild(title);
+        link.appendChild(description);
+        link.appendChild(price);
+
+        card.appendChild(link);
+        card.appendChild(cartBtn);
+        card.appendChild(favoriteBtn);
+
+        // Стилизация
         link.style.textDecoration = 'none';
         link.style.color = 'inherit';
         link.style.display = 'block';
 
-        const title = link.querySelector('h3');
         title.style.margin = '0 0 10px 0';
         title.style.color = '#333';
         title.style.fontSize = '1.2em';
 
-        const paragraphs = link.querySelectorAll('p');
-        paragraphs.forEach(p => {
+        [description, price].forEach(p => {
             p.style.margin = '0 0 8px 0';
             p.style.color = '#666';
         });
 
-        const price = link.querySelector('.price');
         price.style.fontWeight = 'bold';
         price.style.color = '#000';
+
+        // Анимация
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.95)';
+        cardsContainer.appendChild(card);
 
         setTimeout(() => {
             card.style.opacity = '1';
             card.style.transform = 'scale(1)';
+            card.style.transition = 'opacity 0.3s, transform 0.3s';
         }, index * 100);
-
-  
     });
-
-   
-
-
 }
-
 
 function getCookie(name) {
     const value = `; ${document.cookie}`;

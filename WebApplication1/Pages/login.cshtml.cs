@@ -27,7 +27,7 @@ namespace WebApplication1.Pages
             //TODO!!!
             // Здесь должна быть логика проверки учетных данных, тут у Глеба уточнить
             // В реальном приложении проверяем в бд в базе данных
-            if (Username == "admin" && Password == "password")
+            if (Username == "1" && Password == "1")
             {
                 var token = _jwtService.GenerateToken(Username, new[] { "Admin" });
 
@@ -35,11 +35,14 @@ namespace WebApplication1.Pages
                 Response.Cookies.Append("jwt", token, new CookieOptions
                 {
                     HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.Strict
+                    Secure = true, // Только HTTPS
+                    SameSite = SameSiteMode.Lax,
+                    Expires = DateTimeOffset.Now.AddHours(1),
+                    Domain = "localhost",
+                    Path = "/"
                 });
 
-                return RedirectToPage("/Index");
+                 return RedirectToPage("/Index");
             }
 
             ModelState.AddModelError(string.Empty, "Invalid login attempt.");

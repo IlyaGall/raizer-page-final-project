@@ -1,13 +1,4 @@
-﻿// 183
-
-/*
-   // Для категории с подкатегориями - раскрываем/скрываем
-            li.classList.toggle('open');
-            loadProductsByCategory(category.id); 
-            // тут логиика открытия категории товара
-*/
-
-
+﻿
 // Загружаем категории при загрузке страницы
 document.addEventListener('DOMContentLoaded', function () {
     loadCategories();
@@ -116,11 +107,6 @@ function createCategoryElement(category) {
 
     return li;
 }
-
-
-
-
-
 
 // Функция загрузки товаров по категории
 function loadProductsByCategory(categoryId) {
