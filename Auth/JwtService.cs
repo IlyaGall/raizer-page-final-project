@@ -2,8 +2,6 @@
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using Model.User;
-
 
 public class JwtService
 {
@@ -14,20 +12,17 @@ public class JwtService
         _configuration = configuration;
     }
 
-    public string GenerateToken(User user, string[] roles)
+    public string GenerateToken(User user)
     {
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Name, user.UserName),
-            new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()), // ID пользователя
-            new Claim("FullName", user.FullName), // Кастомный claim
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Name, user.Username),
+            new Claim("FullName", user.FullName),
             new Claim("Email", user.Email)
         };
 
-        foreach (var role in user.Role)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
-        }
+        claims.AddRange(user.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -37,8 +32,6 @@ public class JwtService
             audience: _configuration["Jwt:Audience"],
             claims: claims,
             expires: DateTime.Now.AddHours(1),
-          //  expires: DateTime.Now.AddMinutes(
-          //     Convert.ToDouble(_configuration["Jwt:ExpiryInMinutes"])),
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);

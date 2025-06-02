@@ -1,4 +1,45 @@
-﻿
+﻿// Функция для декодирования JWT токена
+function parseJwt(token) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+            atob(base64)
+                .split('')
+                .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                .join('')
+        );
+
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        return null;
+    }
+}
+
+// Получение данных пользователя
+function getUserData() {
+    const cookie = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('jwt='));
+
+    if (!cookie) return null;
+
+    const token = cookie.split('=')[1];
+    return parseJwt(token);
+}
+
+// Пример использования
+const userData = getUserData();
+if (userData) {
+    console.log('User ID:', userData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"]);
+    console.log('Username:', userData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"]);
+    console.log('Full Name:', userData.FullName);
+    console.log('Email:', userData.Email);
+    console.log('Roles:', userData.role || []);
+}
+
+
+
 // Функция для проверки авторизации jwt
 function isAuthenticated() {
     alert(document.cookie.includes('jwt='));
