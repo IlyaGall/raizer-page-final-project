@@ -92,8 +92,22 @@ function renderCards(products) {
                         alert('Требуется авторизация');
                         return;
                     }
-                 
-                    const response = await fetch('https://localhost:7052/api/Favorite/Add', {
+
+                    fetch('https://localhost:7171/api/Shop/1')
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Сетевая ошибка11');
+                            }
+                            alert(response.json());
+                            return response.json();
+                        })
+                        .then(data => console.log(data))
+                        .catch(error => console.error('Ошибка:', error));
+
+
+
+                    
+                    const response = await fetch('https://host.docker.internal:7052/api/Favorite/Add', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

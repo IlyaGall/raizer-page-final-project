@@ -10,28 +10,38 @@ namespace WebApplication1
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // указываем папку из которой будем грузить страницы
+            // Указываем папку из которой будем грузить страницы
             builder.Services.AddRazorPages(options => options.RootDirectory = "/Pages");
 
-            // Добавление сервисов
-            builder.Services.AddScoped<JwtService>(); // Регистрация JwtService
-         
+            // Добавляем сервисы CORS (эта строка отсутствовала)
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                });
+            });
+
+            // Регистрация JwtService
+            builder.Services.AddScoped<JwtService>();
+
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-        };
-    });
-            builder.Services.AddRazorPages();
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                        ValidAudience = builder.Configuration["Jwt:Audience"],
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                    };
+                });
 
             var app = builder.Build();
 
@@ -39,7 +49,6 @@ namespace WebApplication1
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
 
@@ -47,7 +56,10 @@ namespace WebApplication1
             app.UseStaticFiles();
 
             app.UseRouting();
-            app.UseAuthentication(); // Добавьте эту строку
+
+            // Порядок middleware важен!
+            app.UseCors("AllowAll"); // После UseRouting, перед UseAuthentication
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapRazorPages();
