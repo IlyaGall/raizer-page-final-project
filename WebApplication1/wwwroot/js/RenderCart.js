@@ -9,75 +9,45 @@ function parseJwt(token) {
                 .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
                 .join('')
         );
-
         return JSON.parse(jsonPayload);
     } catch (e) {
         return null;
     }
 }
 
-// Получение данных пользователя
+// Получение данных пользователя из localStorage
 function getUserData() {
-    const cookie = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('jwt='));
-
-    if (!cookie) return null;
-
-    const token = cookie.split('=')[1];
+    const token = localStorage.getItem('jwtToken');
+    if (!token) return null;
     return parseJwt(token);
 }
 
 // Пример использования
 const userData = getUserData();
+
+
 if (userData) {
     console.log('User ID:', userData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"]);
     console.log('Username:', userData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"]);
     console.log('Full Name:', userData.FullName);
     console.log('Email:', userData.Email);
-    console.log('Roles:', userData.role || []);
-}
+    console.log('Roles:', userData.role || []
 
 
-
-// Функция для проверки авторизации jwt
-function isAuthenticated() {
-    alert(document.cookie.includes('jwt='));
-    return document.cookie.includes('jwt=');
-}
-
-function isAuthenticated1() {
-    // Для отладки выводим все cookies
-    console.log('Все cookies:', document.cookie);
-
-    // Проверяем наличие jwt cookie
-    const cookieExists = document.cookie.split(';').some(
-        item => item.trim().startsWith('jwt=')
     );
-
-    console.log('JWT cookie exists:', cookieExists);
-    return cookieExists;
 }
 
-//Функция отслеживания на какой странице происходит сейчас находится пользователь
-//Нужно, чтобы не не запускть скрипт с привязкой к дереву
-//document.addEventListener('DOMContentLoaded', function () {
-//    const page = document.body.getAttribute('data-page');
-//    return page;
-//    alert(page);
-//    if (page === '/Index') {
-//        /* Код для конкретной страницы*/
-//    }
-//});
-
-//Функция отслеживания на какой странице происходит сейчас находится пользователь
-//Нужно, чтобы не не запускть скрипт с привязкой к дереву
-function getNamePAge() {
-    return document.body.getAttribute('data-page').toString();
-
+// Функция для проверки авторизации
+function isAuthenticated() {
+    return localStorage.getItem('jwtToken') !== null;
 }
 
-// Функция для отрисовки карточек
+// Функция для получения текущей страницы
+function getCurrentPage() {
+    return document.body.getAttribute('data-page') || window.location.pathname;
+}
+
+// Функция для отрисовки карточек товаров
 function renderCards(products) {
     const cardsContainer = document.getElementById('cardsContainer');
     if (!cardsContainer) {
@@ -85,16 +55,14 @@ function renderCards(products) {
         return;
     }
 
-    // Очищаем контейнер перед добавлением новых карточек
     cardsContainer.innerHTML = '';
 
     products.forEach((product, index) => {
         const card = document.createElement('div');
         card.className = 'card';
 
-        // Создаем элементы вручную вместо innerHTML
         const link = document.createElement('a');
-        link.href = `https://localhost:7100/Product?id=${product.id}`;
+        link.href = `/Product?id=${product.id}`;
 
         const title = document.createElement('h3');
         title.textContent = product.name || 'Без названия';
@@ -110,32 +78,33 @@ function renderCards(products) {
         cartBtn.className = 'cart-btn';
         cartBtn.textContent = 'Добавить в корзину';
 
-        // Создаем кнопку избранного
         const favoriteBtn = document.createElement('button');
         favoriteBtn.className = 'favorite-btn';
-        isAuthenticated1();
+
         if (isAuthenticated()) {
             favoriteBtn.innerHTML = '❤️ Добавить в избранное';
             favoriteBtn.dataset.productId = product.id;
 
-            // Добавляем обработчик напрямую к кнопке
             favoriteBtn.addEventListener('click', async () => {
                 try {
-                    
-                    const token = getCookie('jwt');
+                    const token = localStorage.getItem('jwtToken');
                     if (!token) {
                         alert('Требуется авторизация');
                         return;
                     }
-
-                    const response = await fetch('/api/favorites', {
+                 
+                    const response = await fetch('https://localhost:7052/api/Favorite/Add', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
+                            //'Authorization': `Bearer ${token}`
                         },
-                        body: JSON.stringify({ productId: product.id })
+                        body: JSON.stringify({
+                            UserId: userData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"],  // Можно получить из декодированного JWT токена
+                            ProductId: product.id
+                        })
                     });
+
 
                     if (response.ok) {
                         alert('Товар добавлен в избранное!');
@@ -147,15 +116,12 @@ function renderCards(products) {
                     alert('Произошла ошибка');
                 }
             });
-        }
-        else
-        {
+        } else {
             favoriteBtn.innerHTML = '🔒 Избранное';
             favoriteBtn.disabled = true;
             favoriteBtn.title = 'Требуется авторизация';
         }
 
-        // Собираем карточку
         link.appendChild(title);
         link.appendChild(description);
         link.appendChild(price);
@@ -194,8 +160,8 @@ function renderCards(products) {
     });
 }
 
-function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
+// Функция для выхода из системы
+function logout() {
+    localStorage.removeItem('jwtToken');
+    window.location.href = '/Login';
 }

@@ -9,8 +9,8 @@ namespace client
             var url = "https://localhost:7018/api/auth/login";
             var requestBody = new
             {
-                username = "1",
-                password = "1"
+                username = "string",
+                password = "string"
             };
 
             using (var httpClient = new HttpClient())
@@ -40,6 +40,7 @@ namespace client
                     Console.WriteLine($"Исключение: {ex.Message}");
                 }
             }
+            Console.ReadKey();
         }
     }
 }

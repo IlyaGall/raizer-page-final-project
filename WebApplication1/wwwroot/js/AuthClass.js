@@ -3,7 +3,9 @@
 class AuthService {
     // Логин через API
     static async login(username, password) {
+        console.log(username + " " + password);
         try {
+
             const response = await fetch('https://localhost:7018/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -69,4 +71,6 @@ class AuthService {
     }
 }
 
-export const authService = new AuthService();
+
+// Делаем сервис глобально доступным (без модулей) в противном случае не работает
+window.AuthService = AuthService;
