@@ -20,7 +20,7 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-
+        Console.WriteLine("Tye");
         User user = await _userService.AuthenticateAsync(request.Username, request.Password);
       //   user = new User();
       //  user.TestIngData();//заполняем  тестовыми данными не из бд, так как её сейчас неть(

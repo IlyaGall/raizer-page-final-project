@@ -4,14 +4,28 @@
 }
 <h2>Login</h2>
 
-<form method="post">
-    <div>
-        <label asp-for="Username"></label>
-        <input asp-for="Username" />
-    </div>
-    <div>
-        <label asp-for="Password"></label>
-        <input asp-for="Password" type="password" />
-    </div>
-    <button type="submit">Login</button>
+<form id="loginForm">
+    <input asp-for="Username" class="form-control" />
+    <input asp-for="Password" type="password" class="form-control" />
+    <button type="submit" class="btn btn-primary">Войти</button>
 </form>
+@section Scripts {
+    <script src="~/js/auth.js" type="module"></script>
+}
+@* <script src="~/js/auth.js" asp-append-version="true"></script> *@
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const username = document.getElementById('Username').value;
+        const password = document.getElementById('Password').value;
+
+        try {
+            await AuthService.login(username, password);
+            alert("dsa");
+            window.location.href = '/';
+        } catch (error) {
+            alert(error.message);
+        }
+    });
+</script>

@@ -2,17 +2,16 @@
 
 class AuthService {
     // Логин через API
-    async login(username, password) {
+    static async login(username, password) {
         try {
-            const response = await fetch('/api/auth/login', {
+            const response = await fetch('https://localhost:7018/api/auth/login', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
 
-            if (!response.ok) {
+            if (!response.ok) 
+            {
                 throw new Error('Ошибка авторизации');
             }
 
@@ -23,7 +22,11 @@ class AuthService {
 
             // Возвращаем данные пользователя
             return data.user;
-        } catch (error) {
+
+
+        }
+        catch (error)
+        {
             console.error('Login error:', error);
             throw error;
         }
