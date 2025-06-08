@@ -41,7 +41,7 @@ namespace WebApplication1.Pages
         /// <returns></returns>
         public JsonResult OnGetSearch(string query)
         {
-            // Здесь реализуйте логику поиска товаров
+            // Здесь логика поиска товаров
             // Пример:
             var searchResults = new List<Product>
             {

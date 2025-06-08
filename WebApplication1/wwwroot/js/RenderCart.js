@@ -1,4 +1,5 @@
-﻿// Функция для декодирования JWT токена
+﻿/// <reference path="menu.js" />
+// Функция для декодирования JWT токена
 function parseJwt(token) {
     try {
         const base64Url = token.split('.')[1];
@@ -82,7 +83,7 @@ function renderCards(products) {
         favoriteBtn.className = 'favorite-btn';
 
         if (isAuthenticated()) {
-            favoriteBtn.innerHTML = '❤️ Добавить в избранное';
+            favoriteBtn.innerHTML = '♡︎ Добавить в избранное';
             favoriteBtn.dataset.productId = product.id;
 
             favoriteBtn.addEventListener('click', async () => {
@@ -107,7 +108,7 @@ function renderCards(products) {
 
 
                     
-                    const response = await fetch('https://localhost:7052/api/Favorite/Add', {
+                    const response = await fetch('https://localhost:5011/gateway/Favorite/Add', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -123,6 +124,7 @@ function renderCards(products) {
 
                     if (response.ok) {
                         alert('Товар добавлен в избранное!');
+                        favoriteBtn.innerHTML = "❤";
                     } else {
                         alert('Ошибка при добавлении в избранное');
                     }

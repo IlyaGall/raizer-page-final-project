@@ -3,3 +3,18 @@
 @{
 }
 <h2>@Model.Message</h2>
+<div>
+    <input type="hidden" id="productId" value="123">
+    <textarea id="commentText" placeholder="Ваш комментарий"></textarea>
+    <button id="addCommentBtn">Добавить комментарий</button>
+
+    <div id="commentsContainer">
+        <!-- Комментарии будут загружены тута -->
+    </div>
+</div>
+
+
+@section Scripts {
+    <script src="~/js/loadComment.js"></script>
+
+}
