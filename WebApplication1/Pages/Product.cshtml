@@ -1,20 +1,333 @@
 ﻿@page
 @model WebApplication1.Pages.ProductModel
 @{
+	ViewData["Title"] = "Информация о товаре";
 }
 <h2>@Model.Message</h2>
-<div>
-    <input type="hidden" id="productId" value="123">
-    <textarea id="commentText" placeholder="Ваш комментарий"></textarea>
-    <button id="addCommentBtn">Добавить комментарий</button>
+<div class="container">
+	<h2>@Model.Message</h2>
 
-    <div id="commentsContainer">
-        <!-- Комментарии будут загружены тута -->
-    </div>
+	<!-- Основной контейнер для товара -->
+	<div id="productContainer" class="loading">
+		Загрузка информации о товаре...
+	</div>
+
+	<!-- Скрытое поле для ID товара -->
+	<input type="hidden" id="productId" value="@Model.RouteData.Values["id"]">
+
+	<!-- Блок комментариев -->
+	<div class="comments-section" style="margin-top: 40px; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+		<h3 style="margin-bottom: 20px; color: #166088;">Комментарии</h3>
+
+		<div id="commentsContainer">
+			<!-- Комментарии будут загружены здесь -->
+			<p style="text-align: center; color: #666;">Загрузка комментариев...</p>
+		</div>
+
+		<div style="margin-top: 30px;">
+			<textarea id="commentText" placeholder="Ваш комментарий"
+					  style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; min-height: 100px;"></textarea>
+			<button id="addCommentBtn" class="btn" style="background: #4a6fa5; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">
+				Добавить комментарий
+			</button>
+		</div>
+	</div>
 </div>
+@section Styles {
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #166088;
+            --accent-color: #4fc3f7;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --success-color: #28a745;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            margin-top: 30px;
+        }
+
+        @@media (min-width: 768px) {
+            .product-card {
+                flex-direction: row;
+            }
+        }
+
+        .product-image {
+            flex: 1;
+            min-height: 300px;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .product-info {
+            flex: 1;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-title {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--secondary-color);
+        }
+
+        .product-description {
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        .product-price {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .product-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .meta-item {
+            background: var(--light-color);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: auto;
+            align-self: flex-start;
+        }
+
+            .btn:hover {
+                background: var(--secondary-color);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            }
+
+        .stock-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .stock-badge {
+            padding: 5px 10px;
+            border-radius: var(--border-radius);
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .in-stock {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+        }
+
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2rem;
+        }
+
+        /* Стили для комментариев */
+        .comment {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 15px;
+        }
+
+        .comment-author {
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+
+        .comment-date {
+            color: #888;
+            font-size: 0.8rem;
+        }
+
+        .comment-text {
+            margin-top: 8px;
+        }
+    </style>
+}
 
 @section Scripts {
-    <script src="~/js/loadComment.js"></script>
+	<script>
+		document.addEventListener('DOMContentLoaded', function () {
+			
+        // Получаем ID товара из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id') || '@Model.RouteData.Values["id"]';
+        if (productId)
+        {
+            loadProductInfo(productId);
+            loadComments(productId); // Загружаем комментарии
+        }
+			// Обработчик для добавления комментария
+			document.getElementById('addCommentBtn').addEventListener('click', function() {
+				addComment(productId);
+			});
+		});
 
+		async function loadProductInfo(productId) {
+			try {
+				// Формируем URL для запроса
+				const url = `?handler=ProductInfo&id=${encodeURIComponent(productId)}`;
+
+				// Показываем состояние загрузки
+				document.getElementById('productContainer').className = 'loading';
+				document.getElementById('productContainer').innerHTML = 'Загрузка информации о товаре...';
+
+				// Выполняем запрос к серверу
+				const response = await fetch(url, {
+					headers: {
+						'Accept': 'application/json',
+					}
+				});
+
+				if (!response.ok) {
+					throw new Error('Ошибка при загрузке данных');
+				}
+
+				const productData = await response.json();
+
+				// Отрисовываем данные на странице
+				renderProductInfo(productData);
+			} catch (error) {
+				console.error('Ошибка:', error);
+				document.getElementById('productContainer').className = 'error-message';
+				document.getElementById('productContainer').innerHTML =
+					'<p>Не удалось загрузить информацию о товаре. Пожалуйста, попробуйте позже.</p>';
+			}
+		}
+
+		function renderProductInfo(product) {
+           
+			const container = document.getElementById('productContainer');
+			container.className = 'product-card';
+
+			// Проверяем наличие товара на складе
+			const stockStatus = product.amount > 0
+				? `<span class="stock-badge in-stock">В наличии (${product.amount} шт.)</span>`
+				: '<span class="stock-badge out-of-stock">Нет в наличии</span>';
+
+			container.innerHTML = `
+				<div class="product-image" style="background-image: url('${product.imageUrl}')"></div>
+				<div class="product-info">
+					<h1 class="product-title">${product.nameProduct}</h1>
+					<div class="stock-info">
+						${stockStatus}
+						<span class="meta-item">Арт: ${product.modelNumber}</span>
+						<span class="meta-item">Код: ${product.barcode}</span>
+					</div>
+					<p class="product-description">${product.description}</p>
+					<div class="product-price">${product.price.toLocaleString()} ₽</div>
+					<button class="btn">Добавить в корзину</button>
+				</div>
+			`;
+		}
+
+		// Функции для работы с комментариями
+		async function loadComments(productId) {
+			try {
+				const response = await fetch(`?handler=Comments&productId=${productId}`);
+				if (!response.ok) throw new Error('Ошибка загрузки комментариев');
+				const comments = await response.json();
+				renderComments(comments);
+			} catch (error) {
+				console.error('Ошибка загрузки комментариев:', error);
+				document.getElementById('commentsContainer').innerHTML =
+					'<p class="error-message">Не удалось загрузить комментарии</p>';
+			}
+		}
+
+		function renderComments(comments) {
+			const container = document.getElementById('commentsContainer');
+			if (comments.length === 0) {
+				container.innerHTML = '<p style="text-align: center; color: #666;">Пока нет комментариев. Будьте первым!</p>';
+				return;
+			}
+
+			container.innerHTML = comments.map(comment => `
+				<div class="comment">
+					<div class="comment-author">${comment.authorName}</div>
+					<div class="comment-date">${new Date(comment.createdDate).toLocaleString()}</div>
+					<div class="comment-text">${comment.text}</div>
+				</div>
+			`).join('');
+		}
+
+		async function addComment(productId) {
+			const text = document.getElementById('commentText').value.trim();
+			if (!text) return;
+
+			try {
+				const response = await fetch('?handler=AddComment', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+					},
+					body: JSON.stringify({ productId, text })
+				});
+
+				if (!response.ok) throw new Error('Ошибка при добавлении комментария');
+
+				document.getElementById('commentText').value = '';
+				loadComments(productId); // Перезагружаем комментарии
+			} catch (error) {
+				console.error('Ошибка:', error);
+				alert('Не удалось добавить комментарий');
+			}
+		}
+	</script>
 }
