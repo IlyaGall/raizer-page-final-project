@@ -54,7 +54,7 @@ namespace ConnectBackEnd
         {
             try
             {
-                SetAuthHeader(jwtToken);
+                //SetAuthHeader(jwtToken);
 
                 var response = await _client.PostAsync(path, CreateJson(data));
 

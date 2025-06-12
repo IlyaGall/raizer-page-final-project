@@ -1,0 +1,475 @@
+﻿@page
+@model WebApplication1.Pages.UserPagesModel
+@{
+	ViewData["Title"] = "Панель управления";
+}
+
+<div class="container user-dashboard">
+	<div class="row">
+		<div class="col-md-3 sidebar">
+			<div class="profile-card text-center">
+				<div class="avatar-container">
+					<img src="https://ui-avatars.com/api/?name=@User.Identity.Name&background=random"
+						 alt="Аватар" class="avatar">
+				</div>
+				<h4 class="mt-3">@User.Identity.Name</h4>
+				<p class="text-muted" id="userRole"></p>
+				<button id="logoutBtn" class="btn btn-danger btn-block mt-3">
+					<i class="fas fa-sign-out-alt"></i> Выйти
+				</button>
+			</div>
+
+			<div class="shops-section mt-4">
+				<h5>Мои магазины</h5>
+				<ul class="list-group shops-list" id="shopsList">
+					<li class="list-group-item d-flex justify-content-between align-items-center">
+						Загрузка...
+						<span class="badge badge-primary badge-pill">0</span>
+					</li>
+				</ul>
+			</div>
+		</div>
+
+		<div class="col-md-9 main-content">
+			<div class="dashboard-header">
+				<h1><i class="fas fa-user-cog"></i> @ViewData["Title"]</h1>
+				<p class="welcome-message">Добро пожаловать, <strong>@User.Identity.Name</strong>!</p>
+			</div>
+
+			<div class="card user-info-card mt-4">
+				<div class="card-header">
+					<h3><i class="fas fa-user-tie"></i> Ваши данные</h3>
+				</div>
+				<div class="card-body" id="userData">
+					<div class="loading-spinner">
+						<div class="spinner-border text-primary" role="status">
+							<span class="sr-only">Загрузка...</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="card favorites-card mt-4">
+				<div class="card-header">
+					<h3><i class="fas fa-star"></i> Избранные позиции</h3>
+				</div>
+				<div class="card-body" id="favoritesContainer">
+					<div class="loading-spinner">
+						<div class="spinner-border text-primary" role="status">
+							<span class="sr-only">Загрузка...</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+@Html.AntiForgeryToken()
+
+@section Styles {
+	<style>
+		.user-dashboard {
+			padding: 20px;
+			margin-top: 20px;
+		}
+
+		.sidebar {
+			background: #f8f9fa;
+			border-radius: 10px;
+			padding: 20px;
+			box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+		}
+
+		.profile-card {
+			padding: 20px;
+			background: white;
+			border-radius: 8px;
+			box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+		}
+
+		.avatar-container {
+			width: 100px;
+			height: 100px;
+			margin: 0 auto;
+			border-radius: 50%;
+			overflow: hidden;
+		}
+
+		.avatar {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+		}
+
+		.shops-section {
+			background: white;
+			padding: 15px;
+			border-radius: 8px;
+			box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+		}
+
+		.shops-list {
+			max-height: 300px;
+			overflow-y: auto;
+		}
+
+		.main-content {
+			padding-left: 30px;
+		}
+
+		.dashboard-header {
+			background: white;
+			padding: 20px;
+			border-radius: 10px;
+			box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+			margin-bottom: 20px;
+		}
+
+		.welcome-message {
+			font-size: 1.1rem;
+			color: #6c757d;
+		}
+
+		.user-info-card, .favorites-card {
+			border: none;
+			border-radius: 10px;
+			box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+		}
+
+		.card-header {
+			background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+			color: white;
+			border-radius: 10px 10px 0 0 !important;
+		}
+
+		.loading-spinner {
+			text-align: center;
+			padding: 30px;
+		}
+
+		.favorite-item {
+			display: flex;
+			align-items: center;
+			padding: 10px;
+			border-bottom: 1px solid #eee;
+			transition: background 0.3s;
+		}
+
+			.favorite-item:hover {
+				background: #f8f9fa;
+			}
+
+			.favorite-item img {
+				width: 50px;
+				height: 50px;
+				object-fit: cover;
+				border-radius: 5px;
+				margin-right: 15px;
+			}
+
+		.favorite-info {
+			flex-grow: 1;
+		}
+
+		.favorite-actions {
+			margin-left: 15px;
+		}
+
+		.user-data-row {
+			display: flex;
+			padding: 10px 0;
+			border-bottom: 1px solid #eee;
+		}
+
+		.user-data-label {
+			font-weight: bold;
+			width: 200px;
+			color: #495057;
+		}
+
+		.user-data-value {
+			flex-grow: 1;
+			color: #212529;
+		}
+
+		.empty-favorites {
+			text-align: center;
+			padding: 30px;
+			color: #6c757d;
+		}
+
+		@@media (max-width: 768px) {
+			.main-content {
+				padding-left: 15px;
+				padding-top: 20px;
+			}
+
+			.user-dashboard {
+				padding: 10px;
+			}
+
+			.user-data-row {
+				flex-direction: column;
+			}
+
+			.user-data-label {
+				width: 100%;
+				margin-bottom: 5px;
+			}
+		}
+	</style>
+}
+
+@section Scripts {
+	<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+	<script>
+		document.addEventListener('DOMContentLoaded', function() {
+			// Установка роли пользователя
+
+			// Загрузка данных пользователя
+			loadUserData();
+
+			// Загрузка избранных позиций
+			loadFavorites();
+
+			// Загрузка списка магазинов
+			loadShops();
+
+			// Обработчик кнопки выхода
+			document.getElementById('logoutBtn').addEventListener('click', function() {
+				logout();
+			});
+		});
+
+		//function loadUserData() {
+		//     // Здесь можно сделать AJAX запрос для получения данных пользователя
+		//     // Временно используем mock данные
+		//     setTimeout(function() {
+		//         const userData = {
+		//             fullName: 'Иванов Иван Иванович',
+		//             email: 'ivanov@example.com',
+		//             phone: '+7 (999) 123-45-67',
+		//             position: 'Менеджер по продажам',
+		//             department: 'Отдел продаж',
+		//             hireDate: '15.03.2020'
+		//         };
+
+		//         renderUserData(userData);
+		//     }, 800);
+		// }
+
+				function loadUserData()
+				{
+			fetch('?handler=UserData')
+				.then(response => response.json())
+				.then(data => renderUserData(data))
+				.catch(error => {
+					console.error('Ошибка загрузки данных пользователя:', error);
+					document.getElementById('userData').innerHTML =
+						'<div class="alert alert-danger">Не удалось загрузить данные пользователя</div>';
+				});
+		}
+
+
+		function renderUserData(data) {
+			const container = document.getElementById('userData');
+
+			let html = `
+				<div class="user-data-row">
+					<div class="user-data-label">Полное имя:</div>
+					<div class="user-data-value">${data.fullName}</div>
+				</div>
+				<div class="user-data-row">
+					<div class="user-data-label">Email:</div>
+					<div class="user-data-value">${data.email}</div>
+				</div>
+				<div class="user-data-row">
+					<div class="user-data-label">Телефон:</div>
+					<div class="user-data-value">${data.phone}</div>
+				</div>
+				<div class="user-data-row">
+					<div class="user-data-label">Должность:</div>
+					<div class="user-data-value">${data.position}</div>
+				</div>
+				<div class="user-data-row">
+					<div class="user-data-label">Отдел:</div>
+					<div class="user-data-value">${data.department}</div>
+				</div>
+				<div class="user-data-row">
+					<div class="user-data-label">Дата приема:</div>
+					<div class="user-data-value">${data.hireDate}</div>
+				</div>
+			`;
+
+			container.innerHTML = html;
+		}
+
+		function loadFavorites() {
+			// Здесь можно сделать AJAX запрос для получения избранных позиций
+			// Временно используем mock данные
+			setTimeout(function() {
+				const favorites = [
+					{
+						id: 1,
+						name: 'Ноутбук Lenovo IdeaPad 5',
+						price: '54 990 ₽',
+						image: 'https://via.placeholder.com/50',
+						category: 'Ноутбуки'
+					},
+					{
+						id: 2,
+						name: 'Смартфон Samsung Galaxy S21',
+						price: '69 990 ₽',
+						image: 'https://via.placeholder.com/50',
+						category: 'Смартфоны'
+					},
+					{
+						id: 3,
+						name: 'Наушники Sony WH-1000XM4',
+						price: '29 990 ₽',
+						image: 'https://via.placeholder.com/50',
+						category: 'Аксессуары'
+					}
+				];
+
+				renderFavorites(favorites);
+			}, 1000);
+		}
+
+		function renderFavorites(favorites) {
+			const container = document.getElementById('favoritesContainer');
+
+			if (favorites.length === 0) {
+				container.innerHTML = `
+					<div class="empty-favorites">
+						<i class="fas fa-star" style="font-size: 3rem; color: #ddd; margin-bottom: 15px;"></i>
+						<p>У вас пока нет избранных товаров</p>
+					</div>
+				`;
+				return;
+			}
+
+			let html = '<div class="favorites-list">';
+
+			favorites.forEach(item => {
+				html += `
+					<div class="favorite-item">
+						<img src="${item.image}" alt="${item.name}">
+						<div class="favorite-info">
+							<h6>${item.name}</h6>
+							<small class="text-muted">${item.category}</small>
+						</div>
+						<div class="favorite-price">
+							${item.price}
+						</div>
+						<div class="favorite-actions">
+							<button class="btn btn-sm btn-outline-danger remove-favorite" data-id="${item.id}">
+								<i class="fas fa-trash"></i>
+							</button>
+						</div>
+					</div>
+				`;
+			});
+
+			html += '</div>';
+			container.innerHTML = html;
+
+			// Добавляем обработчики для кнопок удаления
+			document.querySelectorAll('.remove-favorite').forEach(btn => {
+				btn.addEventListener('click', function() {
+					const itemId = this.getAttribute('data-id');
+					removeFavorite(itemId);
+				});
+			});
+		}
+
+		function removeFavorite(itemId) {
+			// Здесь можно сделать AJAX запрос для удаления из избранного
+			console.log(`Удаление из избранного: ${itemId}`);
+			// После удаления можно перезагрузить список
+			loadFavorites();
+		}
+
+		function loadShops() {
+			// Здесь можно сделать AJAX запрос для получения магазинов
+			// Временно используем mock данные
+			setTimeout(function() {
+				const shops = [
+					{ id: 1, name: 'Центральный магазин', products: 245 },
+					{ id: 2, name: 'Северный филиал', products: 189 },
+					{ id: 3, name: 'Южный ТЦ', products: 312 }
+				];
+
+				renderShops(shops);
+			}, 700);
+		}
+
+		function renderShops(shops) {
+			const container = document.getElementById('shopsList');
+
+			let html = '';
+
+			shops.forEach(shop => {
+				html += `
+					<li class="list-group-item d-flex justify-content-between align-items-center">
+						${shop.name}
+						<span class="badge badge-primary badge-pill">${shop.products}</span>
+					</li>
+				`;
+			});
+
+			container.innerHTML = html;
+		}
+
+
+
+			async function logout() {
+				try {
+					// Получаем анти-форджер токен
+					const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+					const response = await fetch('/UserPages?handler=Logout', {
+						method: 'POST',
+						headers: {
+							'RequestVerificationToken': token,
+							'Content-Type': 'application/json'
+						}
+					});
+
+					if (response.ok) {
+						window.location.href = '/Login';
+					} else {
+						console.error('Ошибка при выходе');
+						alert('Не удалось выйти из системы');
+					}
+				} catch (error) {
+					console.error('Ошибка:', error);
+					alert('Произошла ошибка при выходе');
+				}
+			}
+		async function logout() {
+				try {
+					// Получаем анти-форджер токен
+					const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+					const response = await fetch('/UserPages?handler=Logout', {
+						method: 'POST',
+						headers: {
+							'RequestVerificationToken': token,
+							'Content-Type': 'application/json'
+						}
+					});
+
+					if (response.ok) {
+						window.location.href = '/Login';
+					} else {
+						console.error('Ошибка при выходе');
+						alert('Не удалось выйти из системы');
+					}
+				} catch (error) {
+					console.error('Ошибка:', error);
+					alert('Произошла ошибка при выходе');
+				}
+			}
+	</script>
+}

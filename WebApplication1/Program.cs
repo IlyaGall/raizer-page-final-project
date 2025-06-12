@@ -10,42 +10,56 @@ namespace WebApplication1
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Указываем папку из которой будем грузить страницы
+            builder.Services.AddHttpClient();
+            builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
             builder.Services.AddRazorPages(options => options.RootDirectory = "/Pages");
 
-            // Добавляем сервисы CORS (эта строка отсутствовала)
-            builder.Services.AddCors(options =>
+            // Получаем JWT настройки
+            var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+            var secretKey = jwtSettings["SecretKey"];
+
+            if (string.IsNullOrEmpty(secretKey))
             {
-                options.AddPolicy("AllowAll", policy =>
-                {
-                    policy.AllowAnyOrigin()
-                          .AllowAnyMethod()
-                          .AllowAnyHeader();
-                });
-            });
+                throw new InvalidOperationException("JWT SecretKey не настроен в appsettings.json");
+            }
 
-            // Регистрация JwtService
-            builder.Services.AddScoped<JwtService>();
-
-            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
+            // Настройка аутентификации
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    options.TokenValidationParameters = new TokenValidationParameters
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = builder.Configuration["JwtSettings:Issuer"],    // "AuthService"
+                    ValidAudience = builder.Configuration["JwtSettings:Audience"], // "ProductService"
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]))
+                };
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
                     {
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
-                        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                        ValidAudience = builder.Configuration["Jwt:Audience"],
-                        IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-                    };
-                });
+                        // Извлекаем токен из cookie, если он там есть
+                        var token = context.Request.Cookies["JWTToken"];
+                        if (!string.IsNullOrEmpty(token))
+                        {
+                            context.Token = token;
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
+            });
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Error");
@@ -54,16 +68,14 @@ namespace WebApplication1
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-
             app.UseRouting();
 
-            // Порядок middleware важен!
-            app.UseCors("AllowAll"); // После UseRouting, перед UseAuthentication
+            // Аутентификация и авторизация ДО любого middleware
             app.UseAuthentication();
             app.UseAuthorization();
 
+            // Убираем кастомный middleware - стандартной аутентификации достаточно
             app.MapRazorPages();
-
             app.Run();
         }
     }
