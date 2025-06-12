@@ -38,8 +38,6 @@ namespace WebApplication1.Pages
         {
             try
             {
-
-                // Удаляем JWT токен из куков
                 // Удаляем JWT токен из куков
                 Response.Cookies.Delete("JWTToken", new CookieOptions
                 {
@@ -56,14 +54,14 @@ namespace WebApplication1.Pages
             }
             // Перенаправляем на страницу входа
             //  return LocalRedirect("/Index");
-            return LocalRedirect("/Index");
+            return RedirectToPage("/Index");
         }
 
+     
         /// <summary>
-        /// Выход из личного кабинета
+        /// Для тестирования jwt потом удалить
         /// </summary>
         /// <returns></returns>
-    
         public IActionResult OnGet()
         {
             // Получаем JWT из куки
@@ -89,8 +87,6 @@ namespace WebApplication1.Pages
             var username = User.Identity?.Name;  // Получаем имя пользователя из JWT
             ViewData["Username"] = username;
            
-
-           
             try
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
@@ -101,26 +97,17 @@ namespace WebApplication1.Pages
             return Page();
         }
 
-        /// <summary>
-        /// Получить данные пользователя из бд
-        /// </summary>
-        /// <returns></returns>
-        private async Task<ApiResponse<UserDto>>  GetUserId() 
-        {
-            using var apiClient = new ConnectServer();
-            return await apiClient.GetAsync<UserDto>(GlobalVariables.GET_INFO_USER, Request.Cookies["JWTToken"]);
-        }
-
         // Метод для обработки AJAX запросов
         public async Task<JsonResult> OnGetUserData()
         {
-        var s =  await  GetUserId();
+            using var apiClient = new ConnectServer();
+            var user = await apiClient.GetAsync<UserDto>(GlobalVariables.GET_INFO_USER, Request.Cookies["JWTToken"]);
             // Здесь можно получить данные пользователя из базы данных
             var userData = new
             {
-                FullName = "Иванов Иван Иванович1",
-                Email = "ivanov@example.com",
-                Phone = "+7 (999) 123-45-67",
+                FullName = $"{user.Data.Surname} {user.Data.Name} {user.Data.Patronymic}",
+                Email = $"{user.Data.Email}",
+                Phone = $"{user.Data.NumberPhone}",
                 Position = "Менеджер по продажам",
                 Department = "Отдел продаж",
                 HireDate = "15.03.2020"
