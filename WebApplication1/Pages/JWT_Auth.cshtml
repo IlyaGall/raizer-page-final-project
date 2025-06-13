@@ -1,30 +1,215 @@
 ﻿@page
 @model WebApplication1.Pages.JWT_AuthModel
 @{
-	ViewData["Title"] = "Вход в систему";
+    ViewData["Title"] = "Регистрация";
 }
-<div class="row justify-content-center">
-    <div class="col-md-4">
-        <h2 class="text-center">@ViewData["Title"]</h2>
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Input.Login"></label>
-                <input asp-for="Input.Login" class="form-control" />
-                <span asp-validation-for="Input.Login" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Input.Password"></label>
-                <input asp-for="Input.Password" type="password" class="form-control" />
-                <span asp-validation-for="Input.Password" class="text-danger"></span>
-            </div>
-            <div class="form-group mt-3">
-                <button type="submit" class="btn btn-primary w-100">Войти</button>
-            </div>
-        </form>
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-tabs">
+            <button class="auth-tab @(Model.ActiveTab == "login" ? "active" : "")" onclick="switchTab('login')">Вход</button>
+            <button class="auth-tab @(Model.ActiveTab == "register" ? "active" : "")" onclick="switchTab('register')">Регистрация</button>
+        </div>
+
+        <!-- Форма входа -->
+        <div id="login-form" class="auth-form @(Model.ActiveTab == "login" ? "active" : "")">
+            <h2 class="text-center mb-4">Вход в систему</h2>
+            <form method="post" asp-page-handler="Login">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="form-group mb-3">
+                    <label asp-for="LoginInput.Login" class="form-label"></label>
+                    <input asp-for="LoginInput.Login" class="form-control" />
+                    <span asp-validation-for="LoginInput.Login" class="text-danger"></span>
+                </div>
+                <div class="form-group mb-3">
+                    <label asp-for="LoginInput.Password" class="form-label"></label>
+                    <input asp-for="LoginInput.Password" type="password" class="form-control" />
+                    <span asp-validation-for="LoginInput.Password" class="text-danger"></span>
+                </div>
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary w-100 py-2">Войти</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Форма регистрации -->
+        <div id="register-form" class="auth-form @(Model.ActiveTab == "register" ? "active" : "")">
+            <h2 class="text-center mb-4">Регистрация</h2>
+            <form method="post" asp-page-handler="Register">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="RegisterInput.Surname" class="form-label"></label>
+                        <input asp-for="RegisterInput.Surname" class="form-control" />
+                        <span asp-validation-for="RegisterInput.Surname" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="RegisterInput.Name" class="form-label"></label>
+                        <input asp-for="RegisterInput.Name" class="form-control" />
+                        <span asp-validation-for="RegisterInput.Name" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="RegisterInput.Patronymic" class="form-label"></label>
+                        <input asp-for="RegisterInput.Patronymic" class="form-control" />
+                        <span asp-validation-for="RegisterInput.Patronymic" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="RegisterInput.Login" class="form-label"></label>
+                    <input asp-for="RegisterInput.Login" class="form-control" />
+                    <span asp-validation-for="RegisterInput.Login" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="RegisterInput.Password" class="form-label"></label>
+                    <input asp-for="RegisterInput.Password" type="password" class="form-control" />
+                    <span asp-validation-for="RegisterInput.Password" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="RegisterInput.Email" class="form-label"></label>
+                    <input asp-for="RegisterInput.Email" type="email" class="form-control" />
+                    <span asp-validation-for="RegisterInput.Email" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="RegisterInput.NumberPhone" class="form-label"></label>
+                    <input asp-for="RegisterInput.NumberPhone" class="form-control" placeholder="+7 (XXX) XXX-XX-XX" />
+                    <span asp-validation-for="RegisterInput.NumberPhone" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="RegisterInput.TelegramID" class="form-label"></label>
+                    <input asp-for="RegisterInput.TelegramID" class="form-control" />
+                    <span asp-validation-for="RegisterInput.TelegramID" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-success w-100 py-2">Зарегистрироваться</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
+@section Styles {
+    <style>
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+        }
+
+        .auth-tabs {
+            display: flex;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all 0.3s;
+        }
+
+        .auth-tab.active {
+            color: #0d6efd;
+            border-bottom: 3px solid #0d6efd;
+        }
+
+        .auth-tab:hover:not(.active) {
+            background-color: #f8f9fa;
+        }
+
+        .auth-form {
+            padding: 30px;
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .form-label {
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+
+        .btn-success {
+            background-color: #198754;
+            border-color: #198754;
+        }
+
+        @@media (max-width: 768px) {
+            .auth-card {
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            .row {
+                flex-direction: column;
+            }
+
+            .col-md-4 {
+                width: 100%;
+            }
+        }
+    </style>
+}
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function switchTab(tabName) {
+            // Hide all forms
+            document.querySelectorAll('.auth-form').forEach(form => {
+                form.classList.remove('active');
+            });
+
+            // Show selected form
+            document.getElementById(tabName + '-form').classList.add('active');
+
+            // Update active tab style
+            document.querySelectorAll('.auth-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`.auth-tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+
+            // Update URL without reload
+            history.pushState(null, null, `?tab=${tabName}`);
+        }
+
+        // Check URL for tab parameter on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+
+            if (tabParam === 'login' || tabParam === 'register') {
+                switchTab(tabParam);
+            }
+        });
+    </script>
 }

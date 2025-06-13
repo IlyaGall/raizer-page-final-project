@@ -23,6 +23,16 @@ namespace WebApplication1.Pages
         [BindProperty]
         public AuthUserDto Input { get; set; }
 
+
+        [BindProperty]
+        public AuthUserDto LoginInput { get; set; }
+
+        [BindProperty]
+        public AddUserDto RegisterInput { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string ActiveTab { get; set; } = "login";
+
         public IActionResult OnGet()
         {
             if (User.Identity?.IsAuthenticated == true)
@@ -38,13 +48,11 @@ namespace WebApplication1.Pages
         /// <returns></returns>
         public async Task<IActionResult> OnPostAsync()
         {
-
-            
-
-            if (!ModelState.IsValid)
-            { 
-                return Page(); 
-            }
+            //if (!ModelState.IsValid)
+            //{
+            //    ActiveTab = "login";
+            //    return Page(); 
+            //}
 
             var client = _httpClientFactory.CreateClient();
 
@@ -52,8 +60,8 @@ namespace WebApplication1.Pages
 
             var loginData = new
             {
-                Input.Login,
-                Input.Password
+                LoginInput.Login,
+                LoginInput.Password
             };
 
            
@@ -81,6 +89,45 @@ namespace WebApplication1.Pages
             }
             
             ModelState.AddModelError(string.Empty, "Неверные учетные данные");
+            ActiveTab = "login";
+            return Page();
+        }
+
+        public async Task<IActionResult> OnPostRegisterAsync()
+        {
+            if (!ModelState.IsValid)
+            {
+                ActiveTab = "register";
+                return Page();
+            }
+
+            var client = _httpClientFactory.CreateClient();
+            client.BaseAddress = new Uri(_configuration["ApiBaseUrl"]);
+
+            var registerData = new
+            {
+                RegisterInput.Name,
+                RegisterInput.Surname,
+                RegisterInput.Patronymic,
+                RegisterInput.Login,
+                RegisterInput.Password,
+                RegisterInput.NumberPhone,
+                RegisterInput.Email,
+                RegisterInput.TelegramID
+            };
+
+            var response = await client.PostAsJsonAsync("gateway/auth/register", registerData);
+
+            if (response.IsSuccessStatusCode)
+            {
+                TempData["SuccessMessage"] = "Регистрация прошла успешно! Теперь вы можете войти в систему.";
+                ActiveTab = "login";
+                return RedirectToPage(new { tab = "login" });
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            ModelState.AddModelError(string.Empty, $"Ошибка регистрации: {errorContent}");
+            ActiveTab = "register";
             return Page();
         }
 
@@ -91,6 +138,60 @@ namespace WebApplication1.Pages
             public string Username { get; set; }
             public string Role { get; set; }
         }
-        
+        public class AddUserDto
+        {
+            /// <summary>
+            /// Имя пользователя
+            /// </summary>
+            [Required(ErrorMessage = "Имя обязательно")]
+            [StringLength(50, ErrorMessage = "Имя не должно превышать 50 символов")]
+            public string Name { get; set; } = string.Empty;
+
+            /// <summary>
+            /// Фамилия пользователя
+            /// </summary>
+            [Required(ErrorMessage = "Фамилия обязательна")]
+            [StringLength(50, ErrorMessage = "Фамилия не должна превышать 50 символов")]
+            public string Surname { get; set; } = string.Empty;
+
+            /// <summary>
+            /// Отчество
+            /// </summary>
+            [StringLength(50, ErrorMessage = "Отчество не должно превышать 50 символов")]
+            public string Patronymic { get; set; } = string.Empty;
+
+            /// <summary>
+            /// Логин
+            /// </summary>
+            [Required(ErrorMessage = "Логин обязателен")]
+            [StringLength(20, MinimumLength = 4, ErrorMessage = "Логин должен быть от 4 до 20 символов")]
+            public string Login { get; set; } = string.Empty;
+
+            /// <summary>
+            /// Пароль пользователя
+            /// </summary>
+            [Required(ErrorMessage = "Пароль обязателен")]
+            [StringLength(100, MinimumLength = 6, ErrorMessage = "Пароль должен быть от 6 до 100 символов")]
+            [DataType(DataType.Password)]
+            public string Password { get; set; } = string.Empty;
+
+            /// <summary>
+            /// Мобильный телефон пользователя
+            /// </summary>
+            [Phone(ErrorMessage = "Неверный формат телефона")]
+            public string NumberPhone { get; set; } = string.Empty;
+
+            /// <summary>
+            /// Почта пользователя
+            /// </summary>
+            [EmailAddress(ErrorMessage = "Неверный формат email")]
+            public string Email { get; set; } = string.Empty;
+
+            /// <summary>
+            /// Индефикатор пользователя
+            /// </summary>
+            [Range(1, long.MaxValue, ErrorMessage = "Telegram ID должен быть положительным числом")]
+            public long TelegramID { get; set; }
+        }
     }
 }
