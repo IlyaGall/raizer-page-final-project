@@ -95,11 +95,11 @@ namespace WebApplication1.Pages
 
         public async Task<IActionResult> OnPostRegisterAsync()
         {
-            if (!ModelState.IsValid)
-            {
-                ActiveTab = "register";
-                return Page();
-            }
+            //if (!ModelState.IsValid)
+            //{
+            //    ActiveTab = "register";
+            //  //  return Page();
+            //}
 
             var client = _httpClientFactory.CreateClient();
             client.BaseAddress = new Uri(_configuration["ApiBaseUrl"]);
