@@ -5,8 +5,6 @@ VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApplication1", "WebApplication1\WebApplication1.csproj", "{CFBA367F-A6EB-4BCC-83F1-2F45968CFF19}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Auth", "Auth\Auth.csproj", "{F0D9B7C2-0F44-4041-9568-170D0AF8B23B}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "client", "client\client.csproj", "{95957010-90FE-45AD-BAC5-C06C5AA4FEF2}"
 EndProject
 Global
@@ -19,10 +17,6 @@ Global
 		{CFBA367F-A6EB-4BCC-83F1-2F45968CFF19}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CFBA367F-A6EB-4BCC-83F1-2F45968CFF19}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CFBA367F-A6EB-4BCC-83F1-2F45968CFF19}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F0D9B7C2-0F44-4041-9568-170D0AF8B23B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F0D9B7C2-0F44-4041-9568-170D0AF8B23B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F0D9B7C2-0F44-4041-9568-170D0AF8B23B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F0D9B7C2-0F44-4041-9568-170D0AF8B23B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{95957010-90FE-45AD-BAC5-C06C5AA4FEF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{95957010-90FE-45AD-BAC5-C06C5AA4FEF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{95957010-90FE-45AD-BAC5-C06C5AA4FEF2}.Release|Any CPU.ActiveCfg = Release|Any CPU

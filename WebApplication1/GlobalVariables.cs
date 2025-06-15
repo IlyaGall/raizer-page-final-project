@@ -32,12 +32,40 @@
         /// </summary>
         public const string GET_INFO_USER = "gateway/auth/GetUserId";
 
+        /// <summary>
+        /// Обновить информацию о пользователе
+        /// </summary>
+        public const string POST_UPDATE_INFO_USER = "gateway/auth/update";
 
         #endregion
 
+        #region Owner
+
+        /// <summary>
+        /// Добавление менеджера магазина (нужно при создании магазина в первый раз)
+        /// </summary>
+        public const string POST_ADD_OWNER_SHOP = "/gateway/Owner/AddManagersShopsDto";
+
+        /// <summary>
+        /// Упращённый список магазинов пользователя
+        /// </summary>
+        public const string POST_LIST_SHOP_USER = "/gateway/Owner/GetShop";
+       
+
+        #endregion
+
+        #region shop
+        /// <summary>
+        /// Добавить магазин
+        /// </summary>
+        public const string POST_ADD_SHOP = "/gateway/Shop/add";
+
+        /// <summary>
+        /// Получить информацию о магазине
+        /// </summary>
+        public const string GET_INFO_SHOP = "/gateway/Shop/GetInfo?id=";
 
 
-
-
+        #endregion
     }
 }

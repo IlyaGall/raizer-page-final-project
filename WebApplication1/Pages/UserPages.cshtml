@@ -4,6 +4,14 @@
 	ViewData["Title"] = "Панель управления";
 }
 
+@if (TempData["SuccessMessage"] != null)
+{
+	<div class="alert alert-danger alert-dismissible fade show" role="alert">
+		@TempData["SuccessMessage"]
+		<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+	</div>
+}
+
 <div class="container user-dashboard">
 	<div class="row">
 		<div class="col-md-3 sidebar">
@@ -20,15 +28,23 @@
 			</div>
 
 			<div class="shops-section mt-4">
-				<h5>Мои магазины</h5>
+				<div class="d-flex flex-column mb-3">
+					<h5>Мои магазины</h5>
+					<a asp-page="/CreateShop" class="btn btn-success btn-sm align-self-start">
+						<i class="fas fa-plus me-1"></i> Создать новый магазин
+					</a>
+				</div>
 				<ul class="list-group shops-list" id="shopsList">
 					<li class="list-group-item d-flex justify-content-between align-items-center">
 						Загрузка...
-						<span class="badge badge-primary badge-pill">0</span>
+						<span class="badge bg-primary rounded-pill">0</span>
 					</li>
 				</ul>
 			</div>
 		</div>
+
+
+
 
 		<div class="col-md-9 main-content">
 			<div class="dashboard-header">
@@ -48,7 +64,9 @@
 					</div>
 				</div>
 			</div>
-
+			<div class="text-end mb-3">
+				<a asp-page="/EditProfile" class="btn btn-outline-primary">Редактировать профиль</a>
+			</div>
 			<div class="card favorites-card mt-4">
 				<div class="card-header">
 					<h3><i class="fas fa-star"></i> Избранные позиции</h3>
@@ -224,42 +242,16 @@
 	<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 	<script>
 		document.addEventListener('DOMContentLoaded', function() {
-			// Установка роли пользователя
-
-			// Загрузка данных пользователя
 			loadUserData();
-
-			// Загрузка избранных позиций
 			loadFavorites();
-
-			// Загрузка списка магазинов
 			loadShops();
 
-			// Обработчик кнопки выхода
 			document.getElementById('logoutBtn').addEventListener('click', function() {
 				logout();
 			});
 		});
 
-		//function loadUserData() {
-		//     // Здесь можно сделать AJAX запрос для получения данных пользователя
-		//     // Временно используем mock данные
-		//     setTimeout(function() {
-		//         const userData = {
-		//             fullName: 'Иванов Иван Иванович',
-		//             email: 'ivanov@example.com',
-		//             phone: '+7 (999) 123-45-67',
-		//             position: 'Менеджер по продажам',
-		//             department: 'Отдел продаж',
-		//             hireDate: '15.03.2020'
-		//         };
-
-		//         renderUserData(userData);
-		//     }, 800);
-		// }
-
-				function loadUserData()
-				{
+		function loadUserData() {
 			fetch('?handler=UserData')
 				.then(response => response.json())
 				.then(data => renderUserData(data))
@@ -270,10 +262,8 @@
 				});
 		}
 
-
 		function renderUserData(data) {
 			const container = document.getElementById('userData');
-
 			let html = `
 				<div class="user-data-row">
 					<div class="user-data-label">Полное имя:</div>
@@ -300,45 +290,18 @@
 					<div class="user-data-value">${data.hireDate}</div>
 				</div>
 			`;
-
 			container.innerHTML = html;
 		}
 
 		function loadFavorites() {
-			// Здесь можно сделать AJAX запрос для получения избранных позиций
-			// Временно используем mock данные
-			setTimeout(function() {
-				const favorites = [
-					{
-						id: 1,
-						name: 'Ноутбук Lenovo IdeaPad 5',
-						price: '54 990 ₽',
-						image: 'https://via.placeholder.com/50',
-						category: 'Ноутбуки'
-					},
-					{
-						id: 2,
-						name: 'Смартфон Samsung Galaxy S21',
-						price: '69 990 ₽',
-						image: 'https://via.placeholder.com/50',
-						category: 'Смартфоны'
-					},
-					{
-						id: 3,
-						name: 'Наушники Sony WH-1000XM4',
-						price: '29 990 ₽',
-						image: 'https://via.placeholder.com/50',
-						category: 'Аксессуары'
-					}
-				];
-
-				renderFavorites(favorites);
-			}, 1000);
+			fetch('?handler=Favorites')
+				.then(response => response.json())
+				.then(data => renderFavorites(data))
+				.catch(error => console.error('Ошибка загрузки избранного:', error));
 		}
 
 		function renderFavorites(favorites) {
 			const container = document.getElementById('favoritesContainer');
-
 			if (favorites.length === 0) {
 				container.innerHTML = `
 					<div class="empty-favorites">
@@ -348,9 +311,7 @@
 				`;
 				return;
 			}
-
 			let html = '<div class="favorites-list">';
-
 			favorites.forEach(item => {
 				html += `
 					<div class="favorite-item">
@@ -370,11 +331,8 @@
 					</div>
 				`;
 			});
-
 			html += '</div>';
 			container.innerHTML = html;
-
-			// Добавляем обработчики для кнопок удаления
 			document.querySelectorAll('.remove-favorite').forEach(btn => {
 				btn.addEventListener('click', function() {
 					const itemId = this.getAttribute('data-id');
@@ -384,36 +342,47 @@
 		}
 
 		function removeFavorite(itemId) {
-			// Здесь можно сделать AJAX запрос для удаления из избранного
 			console.log(`Удаление из избранного: ${itemId}`);
-			// После удаления можно перезагрузить список
 			loadFavorites();
 		}
 
 		function loadShops() {
-			// Здесь можно сделать AJAX запрос для получения магазинов
-			// Временно используем mock данные
-			setTimeout(function() {
-				const shops = [
-					{ id: 1, name: 'Центральный магазин', products: 245 },
-					{ id: 2, name: 'Северный филиал', products: 189 },
-					{ id: 3, name: 'Южный ТЦ', products: 312 }
-				];
-
-				renderShops(shops);
-			}, 700);
+			fetch('?handler=Shops')
+				.then(response => {
+					if (!response.ok) throw new Error('Ошибка сети');
+					return response.json();
+				})
+				.then(data => renderShops(data))
+				.catch(error => {
+					console.error('Ошибка загрузки магазинов:', error);
+					document.getElementById('shopsList').innerHTML = `
+						<li class="list-group-item text-danger">
+							Ошибка загрузки магазинов. <a href="javascript:loadShops()">Повторить</a>
+						</li>
+					`;
+				});
 		}
 
 		function renderShops(shops) {
 			const container = document.getElementById('shopsList');
 
-			let html = '';
+			if (!shops || shops.length === 0) {
+				container.innerHTML = `
+					<li class="list-group-item text-muted">
+						У вас пока нет магазинов. <a href="/CreateShop">Создать первый магазин</a>
+					</li>
+				`;
+				return;
+			}
 
+			let html = '';
 			shops.forEach(shop => {
 				html += `
-					<li class="list-group-item d-flex justify-content-between align-items-center">
-						${shop.name}
-						<span class="badge badge-primary badge-pill">${shop.products}</span>
+					<li class="list-group-item shop-item d-flex justify-content-between align-items-center">
+						<a href="/ShopManagement/${shop.id}" class="shop-link">
+							${shop.name}
+						</a>
+						<span class="badge bg-primary rounded-pill">${shop.products}</span>
 					</li>
 				`;
 			});
@@ -421,55 +390,26 @@
 			container.innerHTML = html;
 		}
 
-
-
-			async function logout() {
-				try {
-					// Получаем анти-форджер токен
-					const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
-					const response = await fetch('/UserPages?handler=Logout', {
-						method: 'POST',
-						headers: {
-							'RequestVerificationToken': token,
-							'Content-Type': 'application/json'
-						}
-					});
-
-					if (response.ok) {
-						window.location.href = '/Login';
-					} else {
-						console.error('Ошибка при выходе');
-						alert('Не удалось выйти из системы');
-					}
-				} catch (error) {
-					console.error('Ошибка:', error);
-					alert('Произошла ошибка при выходе');
-				}
-			}
 		async function logout() {
-				try {
-					// Получаем анти-форджер токен
-					const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
-					const response = await fetch('/UserPages?handler=Logout', {
-						method: 'POST',
-						headers: {
-							'RequestVerificationToken': token,
-							'Content-Type': 'application/json'
-						}
-					});
-
-					if (response.ok) {
-						window.location.href = '/Index';
-					} else {
-						console.error('Ошибка при выходе');
-						alert('Не удалось выйти из системы');
+			try {
+				const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+				const response = await fetch('/UserPages?handler=Logout', {
+					method: 'POST',
+					headers: {
+						'RequestVerificationToken': token,
+						'Content-Type': 'application/json'
 					}
-				} catch (error) {
-					console.error('Ошибка:', error);
-					alert('Произошла ошибка при выходе');
+				});
+				if (response.ok) {
+					window.location.href = '/Index';
+				} else {
+					console.error('Ошибка при выходе');
+					alert('Не удалось выйти из системы');
 				}
+			} catch (error) {
+				console.error('Ошибка:', error);
+				alert('Произошла ошибка при выходе');
 			}
+		}
 	</script>
 }

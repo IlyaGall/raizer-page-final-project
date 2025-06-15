@@ -1,7 +1,5 @@
-﻿namespace WebApplication1.Model.Auth
-{
-
-    namespace AuthService.BLL.Dto
+﻿
+    namespace AuthService.Dto
     {
         public class UserDto
         {
@@ -59,4 +57,3 @@
         }
     }
 
-}

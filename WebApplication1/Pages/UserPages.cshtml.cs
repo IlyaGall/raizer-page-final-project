@@ -1,22 +1,14 @@
 ﻿using ConnectBackEnd;
 using GlobalVariablesRP;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Security.Claims;
-using System.Text;
-using WebApplication1.Model.Auth;
-using WebApplication1.Model.Auth.AuthService.BLL.Dto;
-using WebApplication1.Model.Product.ProductDto;
-using Microsoft.JSInterop;
+using AuthService.Dto;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WebApplication1.Pages
 {
@@ -24,10 +16,13 @@ namespace WebApplication1.Pages
     public class UserPagesModel : PageModel
     {
         private readonly IConfiguration _configuration;
+        private readonly HttpClient _client;
 
-        public UserPagesModel(IConfiguration configuration)
+        public UserPagesModel(IConfiguration configuration, IHttpClientFactory clientFactory)
         {
             _configuration = configuration;
+            _client = clientFactory.CreateClient();
+            _client.BaseAddress = new Uri(GlobalVariables.GETWAY_OCELOT);
         }
 
         /// <summary>
@@ -47,9 +42,9 @@ namespace WebApplication1.Pages
                     Path = "/"
                 });
             }
-            catch 
+            catch
             {
-                 return RedirectToPage("/Index");
+                return RedirectToPage("/Index");
 
             }
             // Перенаправляем на страницу входа
@@ -57,7 +52,7 @@ namespace WebApplication1.Pages
             return RedirectToPage("/Index");
         }
 
-     
+
         /// <summary>
         /// Для тестирования jwt потом удалить
         /// </summary>
@@ -81,12 +76,12 @@ namespace WebApplication1.Pages
                 ViewData["UserId"] = userId;
                 ViewData["Username"] = username_token;
                 ViewData["Role"] = role;
-              //  ViewData["Nickname"] = nickname;
+                //  ViewData["Nickname"] = nickname;
             }
 
             var username = User.Identity?.Name;  // Получаем имя пользователя из JWT
             ViewData["Username"] = username;
-           
+
             try
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
@@ -96,6 +91,44 @@ namespace WebApplication1.Pages
             catch (Exception ex) { }
             return Page();
         }
+
+
+        [BindProperty]
+        public AddUserDto UpdateData { get; set; }
+
+        public async Task<IActionResult> OnPostUpdateUserInfoAsync()
+        {
+            if (!ModelState.IsValid)
+            {
+                return Page();
+            }
+
+            try
+            {
+                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+                var response = await _client.PostAsJsonAsync($"{GlobalVariables.GETWAY_OCELOT}/auth/update", UpdateData);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessMessage"] = "Данные успешно обновлены";
+                    return RedirectToPage();
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    ModelState.AddModelError(string.Empty, $"Ошибка при обновлении данных: {errorContent}");
+                    return Page();
+                }
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, $"Произошла ошибка: {ex.Message}");
+                return Page();
+            }
+        }
+
+
+        #region подгрузка данных по базам
 
         // Метод для обработки AJAX запросов
         public async Task<JsonResult> OnGetUserData()
@@ -142,16 +175,68 @@ namespace WebApplication1.Pages
             return new JsonResult(favorites);
         }
 
-        public JsonResult OnGetShops()
+        public async Task<JsonResult> OnGetShops()
         {
             // Здесь можно получить магазины пользователя из базы данных
-            var shops = new[]
+            try
             {
-                new { Id = 1, Name = "Центральный магазин", Products = 245 },
-                new { Id = 2, Name = "Северный филиал", Products = 189 }
-            };
 
-            return new JsonResult(shops);
+               // using var client = new HttpClient();
+                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+                
+                var response = await _client.GetAsync(
+                    $"{GlobalVariables.GETWAY_OCELOT}" +
+                    $"{GlobalVariables.POST_LIST_SHOP_USER}"); //Объект не нужен, так как передаём jwt токен
+
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessMessage"] = "Ошибка при получении данных";
+                    return null;
+                }
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseBody = await response.Content.ReadAsStringAsync();
+
+
+                    // Далее десериализация JSON 
+                    var items = JsonSerializer.Deserialize<List<ObjectDto>>(responseBody);
+
+                    if (items == null || items.Count == 0)
+                    {
+                        return null;
+                    }
+                    var result = items.Select(item => new
+                    {
+                        id = item.ShopId,
+                        name = item.NameShop,
+                        products = 0
+                    })
+                     .ToList();
+
+                        
+                  return new JsonResult(result);
+                   
+                }
+                return new JsonResult(null);
+            }
+            catch (Exception ex)
+            {
+                TempData["SuccessMessage"] = ex.Message ;
+                return new JsonResult(new { error = ex.Message });
+            }
         }
+
+        #endregion
+    }
+
+    public class ObjectDto
+    {
+        public int UserId { get; set; }
+        public int ShopId { get; set; }
+        public string NameShop { get; set; }
     }
 }
+
+
