@@ -75,8 +75,15 @@ namespace WebApplication1.Pages
 
 
         #region Работа с магазином
+        [HttpPost]
+        [ValidateAntiForgeryToken] // Атрибут на серверной стороне для проверки токена
         public async Task<IActionResult> OnPostUpdateShop([FromBody] ShopUpdateRequest request)
         {
+            // Токен уже проверен автоматически
+            if (!ModelState.IsValid)
+            {
+                return Page();
+            }
             try
             {
                 var response = await _client.PutAsJsonAsync($"{GlobalVariables.GETWAY_OCELOT}shops/{request.Id}", request);
@@ -137,9 +144,84 @@ namespace WebApplication1.Pages
             }
         }
 
+        /// <summary>
+        /// Обновление продукта
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        public async Task<IActionResult> OnPostUpdateProduct([FromBody] ProductUpdateRequest request)
+        {
+            try
+            {
+                var response = await _client.PutAsJsonAsync($"{GlobalVariables.GETWAY_OCELOT}products/{request.Id}", request);
+                if (response.IsSuccessStatusCode)
+                {
+                    return new OkResult();
+                }
+                return BadRequest(await response.Content.ReadAsStringAsync());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Добовление продукта
+        /// </summary>
+        /// <param name="product"></param>
+        /// <returns></returns>
+        public async Task<IActionResult> OnPostSaveProductAsync([FromBody] ProductSave product)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                // 1. Проверка авторизации и прав
+                if (!User.Identity.IsAuthenticated)
+                {
+                    return Unauthorized();
+                }
+
+                // 2. Валидация данных
+                if (string.IsNullOrWhiteSpace(product.Name) || product.Price <= 0)
+                {
+                    return BadRequest("Название и цена товара обязательны");
+                }
+
+                // 3. Логика сохранения (пример с HttpClient)
+                _client.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+
+                var response = await _client.PostAsJsonAsync(
+                    $"{GlobalVariables.GETWAY_OCELOT}/products",
+                    new
+                    {
+                        product.Name,
+                        product.Price,
+                        product.Description,
+                        ShopId = product.ShopId
+                    });
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return BadRequest(await response.Content.ReadAsStringAsync());
+                }
+
+                // 4. Возвращаем успешный результат
+                return new JsonResult(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Ошибка при сохранении товара: {ex.Message}");
+            }
+        }
         #endregion
-       
-        
+
+
         #region менеджеры
         /// <summary>
         /// загрузка менеджеров магазина
@@ -231,5 +313,14 @@ namespace WebApplication1.Pages
         public string Name { get; set; }
         public decimal Price { get; set; }
         public string Description { get; set; }
+    }
+
+    public class ProductSave
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public decimal Price { get; set; }
+        public string Description { get; set; }
+        public int ShopId { get; set; }
     }
 }

@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Управление магазином";
 }
+@Html.AntiForgeryToken()
 <div class="container">
     @if (TempData["SuccessMessage"] != null)
     {
@@ -304,31 +305,25 @@
             });
         }
 
-             function updateShop() {
-            // Получаем все необходимые элементы
-            const shopIdEl = document.getElementById('shopId');
-            const shopNameEl = document.getElementById('shopName');
-            const shopDescEl = document.getElementById('shopDescriptionEdit');
-            const shopAddrEl = document.getElementById('shopAddressEdit');
-            const shopContactEl = document.getElementById('shopContactInfoEdit');
-
-            // Проверяем, что все элементы существуют
-            if (!shopIdEl || !shopNameEl || !shopDescEl || !shopAddrEl || !shopContactEl) {
-                console.error('Один или несколько элементов формы не найдены');
-                alert('Ошибка: не удалось найти элементы формы');
+                  function updateShop() {
+            // Получаем токен безопасности
+            const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (!tokenElement) {
+                console.error('Anti-forgery token not found');
+                alert('Ошибка безопасности. Пожалуйста, обновите страницу.');
                 return;
             }
 
-            // Формируем объект с данными
+            // Получаем данные формы
             const shopData = {
-                id: shopIdEl.value,
-                name: shopNameEl.value,
-                description: shopDescEl.value,
-                address: shopAddrEl.value,
-                contactInfo: shopContactEl.value
+                id: document.getElementById('shopId')?.value,
+                name: document.getElementById('shopName')?.value,
+                description: document.getElementById('shopDescriptionEdit')?.value,
+                address: document.getElementById('shopAddressEdit')?.value,
+                contactInfo: document.getElementById('shopContactInfoEdit')?.value
             };
 
-            // Проверяем, что все обязательные поля заполнены
+            // Проверяем заполненность полей
             if (!shopData.name || !shopData.description || !shopData.address || !shopData.contactInfo) {
                 alert('Пожалуйста, заполните все обязательные поля');
                 return;
@@ -339,30 +334,24 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    'RequestVerificationToken': tokenElement.value
                 },
                 body: JSON.stringify(shopData)
             })
             .then(response => {
-                if (response.ok) {
-                    $('#editShopModal').modal('hide');
+                if (!response.ok) throw new Error('Ошибка сервера: ' + response.status);
+                return response;
+            })
+            .then(() => {
+                $('#editShopModal').modal('hide');
+                // Обновляем данные на странице
+                document.querySelector('.card-header h4').textContent = shopData.name;
+                document.getElementById('shopDescription').textContent = shopData.description;
+                document.getElementById('shopAddress').textContent = shopData.address;
+                document.getElementById('shopContactInfo').textContent = shopData.contactInfo;
 
-                    // Обновляем данные на странице
-                    const shopNameHeader = document.querySelector('.card-header h4');
-                    const shopDescSpan = document.getElementById('shopDescription');
-                    const shopAddrSpan = document.getElementById('shopAddress');
-                    const shopContactSpan = document.getElementById('shopContactInfo');
-
-                    if (shopNameHeader) shopNameHeader.textContent = shopData.name;
-                    if (shopDescSpan) shopDescSpan.textContent = shopData.description;
-                    if (shopAddrSpan) shopAddrSpan.textContent = shopData.address;
-                    if (shopContactSpan) shopContactSpan.textContent = shopData.contactInfo;
-
-                    // Показываем сообщение об успехе
-                    showSuccessMessage('Данные магазина успешно обновлены');
-                } else {
-                    throw new Error('Ошибка сервера: ' + response.status);
-                }
+                // Показываем сообщение об успехе
+                alert('Данные магазина успешно обновлены');
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -393,7 +382,7 @@
                 shopId: document.getElementById('productShopId').value
             };
 
-            fetch('?handler=AddProduct', {
+            fetch('?handler=SaveProduct', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
