@@ -65,6 +65,10 @@
         /// </summary>
         public const string GET_INFO_SHOP = "/gateway/Shop/GetInfo?id=";
 
+        /// <summary>
+        /// Обновление название магазина
+        /// </summary>
+        public const string POST_UPDATE = "/gateway/Shop/Update";
 
         #endregion
     }

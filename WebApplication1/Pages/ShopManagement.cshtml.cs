@@ -35,7 +35,7 @@ namespace WebApplication1.Pages
 
             if (response.IsSuccessStatusCode)
             {
-                //TempData["SuccessMessage"] = "Данные успешно обновлены";
+              
                 string responseBody = await response.Content.ReadAsStringAsync();
                 var options = new JsonSerializerOptions
                 {
@@ -52,6 +52,7 @@ namespace WebApplication1.Pages
                     Adress = item.Adress,
                     ContactInfo = item.ContactInfo
                 };
+                TempData["SuccessMessage"] = "Данные успешно обновлены";
             }
             else
             {

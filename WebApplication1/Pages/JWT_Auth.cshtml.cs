@@ -1,4 +1,4 @@
-using ConnectBackEnd;
+п»їusing ConnectBackEnd;
 using GlobalVariablesRP;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -10,7 +10,7 @@ namespace WebApplication1.Pages
 {
     public class JWT_AuthModel : PageModel
     {
-        private readonly IHttpClientFactory _httpClientFactory; // фабрика клиентов
+        private readonly IHttpClientFactory _httpClientFactory; // С„Р°Р±СЂРёРєР° РєР»РёРµРЅС‚РѕРІ
         private readonly IConfiguration _configuration;
 
         public JWT_AuthModel(IHttpClientFactory httpClientFactory, IConfiguration configuration)
@@ -19,7 +19,7 @@ namespace WebApplication1.Pages
             _configuration = configuration;
         }
 
-        // Берём данные с формы авторизации
+        // Р‘РµСЂС‘Рј РґР°РЅРЅС‹Рµ СЃ С„РѕСЂРјС‹ Р°РІС‚РѕСЂРёР·Р°С†РёРё
 
         [BindProperty]
         public AuthUserDto LoginInput { get; set; }
@@ -34,13 +34,13 @@ namespace WebApplication1.Pages
         {
             if (User.Identity?.IsAuthenticated == true)
             {
-                //если пользователь авторизован, то перекинем его сразу на его личный кабинет
+                //РµСЃР»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ Р°РІС‚РѕСЂРёР·РѕРІР°РЅ, С‚Рѕ РїРµСЂРµРєРёРЅРµРј РµРіРѕ СЃСЂР°Р·Сѓ РЅР° РµРіРѕ Р»РёС‡РЅС‹Р№ РєР°Р±РёРЅРµС‚
                 return RedirectToPage("/UserPages");
             }
             return null;
         }
         /// <summary>
-        /// Обработка авторизации пользователя
+        /// РћР±СЂР°Р±РѕС‚РєР° Р°РІС‚РѕСЂРёР·Р°С†РёРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
         /// </summary>
         /// <returns></returns>
         public async Task<IActionResult> OnPostAsync()
@@ -51,42 +51,54 @@ namespace WebApplication1.Pages
 
             var loginData = new
             {
-                // берём данные с формы
+                // Р±РµСЂС‘Рј РґР°РЅРЅС‹Рµ СЃ С„РѕСЂРјС‹
                 LoginInput.Login,
                 LoginInput.Password
             };
 
-           
-            var response = await client.PostAsJsonAsync("gateway/auth/login", loginData);
-
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var responseContent = await response.Content.ReadFromJsonAsync<AuthResponse>();
-
-             
-                // Сохраняем токен в куки и сессию
-                Response.Cookies.Append("JWTToken", responseContent.Token, new CookieOptions
+                var response = await client.PostAsJsonAsync("gateway/auth/login", loginData);
+                if (response.IsSuccessStatusCode)
                 {
-                    HttpOnly = true, // Защита от XSS js не сможет работать с печенькой(
-                    Secure = true, // Только HTTPS
-                    SameSite = SameSiteMode.Strict, // Защита от CSRF
-                    Expires = DateTimeOffset.Now.AddMinutes(30),
-                    Path = "/" // Доступно для всех путей
-                });
-                // Не сохраняем токен в сессии - это избыточно при использовании кук
-                // HttpContext.Session.SetString("JWTToken", responseContent.Token);
+                    var responseContent = await response.Content.ReadFromJsonAsync<AuthResponse>();
 
-                // Перенаправляем на защищенную страницу (личная страница пользователя)
-                return RedirectToPage("/UserPages");
+
+                    // РЎРѕС…СЂР°РЅСЏРµРј С‚РѕРєРµРЅ РІ РєСѓРєРё Рё СЃРµСЃСЃРёСЋ
+                    Response.Cookies.Append("JWTToken", responseContent.Token, new CookieOptions
+                    {
+                        HttpOnly = true, // Р—Р°С‰РёС‚Р° РѕС‚ XSS js РЅРµ СЃРјРѕР¶РµС‚ СЂР°Р±РѕС‚Р°С‚СЊ СЃ РїРµС‡РµРЅСЊРєРѕР№(
+                        Secure = true, // РўРѕР»СЊРєРѕ HTTPS
+                        SameSite = SameSiteMode.Strict, // Р—Р°С‰РёС‚Р° РѕС‚ CSRF
+                        Expires = DateTimeOffset.Now.AddMinutes(30),
+                        Path = "/" // Р”РѕСЃС‚СѓРїРЅРѕ РґР»СЏ РІСЃРµС… РїСѓС‚РµР№
+                    });
+                    // РќРµ СЃРѕС…СЂР°РЅСЏРµРј С‚РѕРєРµРЅ РІ СЃРµСЃСЃРёРё - СЌС‚Рѕ РёР·Р±С‹С‚РѕС‡РЅРѕ РїСЂРё РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРё РєСѓРє
+                    // HttpContext.Session.SetString("JWTToken", responseContent.Token);
+
+                    // РџРµСЂРµРЅР°РїСЂР°РІР»СЏРµРј РЅР° Р·Р°С‰РёС‰РµРЅРЅСѓСЋ СЃС‚СЂР°РЅРёС†Сѓ (Р»РёС‡РЅР°СЏ СЃС‚СЂР°РЅРёС†Р° РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ)
+                    return RedirectToPage("/UserPages");
+                }
+                else 
+                {
+                    TempData["SuccessMessage"] = "РљР°Р¶РµС‚СЃСЏ, РєС‚Рѕ-С‚Рѕ РїС‹С‚Р°РµС‚СЃСЏ РІР·Р»РѕРјР°С‚СЊ РјР°С‚СЂРёС†Сѓ... РЅРѕ Сѓ РІР°СЃ РїСЂРѕСЃС‚Рѕ РѕРїРµС‡Р°С‚РєР°! рџ‰\r\n\r\nРџРѕРїСЂРѕР±СѓР№ РµС‰С‘ СЂР°Р· вЂ” РІРґСЂСѓРі СЌС‚Рѕ Р·Р»РѕР±РЅС‹Р№ РіР»СЋРє СЃСЉРµР» Р±СѓРєРІСѓ?";
+                }
             }
-            
-            ModelState.AddModelError(string.Empty, "Неверные учетные данные");
-            ActiveTab = "login";
+            catch (HttpRequestException ex) 
+            {
+                TempData["SuccessMessage"] = "Р¤РёРєСЃРёРє РїРµСЂРµР±СЂР°Р» СЃ СЌР»РµРєС‚СЂРѕР»РёС‚Р°РјРё, РЅРѕ РЅР°С€Рё РґРѕРєС‚РѕСЂР° СѓР¶Рµ РµРіРѕ С‡РёРЅСЏС‚! рџ”Њрџ’‰\r\nРЎРµСЂРІРёСЃ Р°РІС‚РѕСЂРёР·Р°С†РёРё РЅРµРЅР°РґРѕР»РіРѕ РѕС‚РєР»СЋС‡РёР»СЃСЏ вЂ” РґР°С‘Рј СЃР»РѕРІРѕ, СЃРєРѕСЂРѕ РІСЃС‘ Р·Р°СЂР°Р±РѕС‚Р°РµС‚! рџ‰";
+            }
+            catch (Exception ex)
+            {
+                    TempData["SuccessMessage"] = ex.ToString();
+
+            }//  ModelState.AddModelError(string.Empty, "РќРµРІРµСЂРЅС‹Рµ СѓС‡РµС‚РЅС‹Рµ РґР°РЅРЅС‹Рµ");
+         //   ActiveTab = "login";
             return Page();
         }
 
         /// <summary>
-        /// Регистрация нового пользователя
+        /// Р РµРіРёСЃС‚СЂР°С†РёСЏ РЅРѕРІРѕРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
         /// </summary>
         /// <returns></returns>
         public async Task<IActionResult> OnPostRegisterAsync()
@@ -111,13 +123,13 @@ namespace WebApplication1.Pages
 
             if (response.IsSuccessStatusCode)
             {
-                TempData["SuccessMessage"] = "Регистрация прошла успешно! Теперь вы можете войти в систему.";
+                TempData["SuccessMessage"] = "Р РµРіРёСЃС‚СЂР°С†РёСЏ РїСЂРѕС€Р»Р° СѓСЃРїРµС€РЅРѕ! РўРµРїРµСЂСЊ РІС‹ РјРѕР¶РµС‚Рµ РІРѕР№С‚Рё РІ СЃРёСЃС‚РµРјСѓ.";
                 ActiveTab = "login";
                 return RedirectToPage(new { tab = "login" });
             }
 
             var errorContent = await response.Content.ReadAsStringAsync();
-            ModelState.AddModelError(string.Empty, $"Ошибка регистрации: {errorContent}");
+            ModelState.AddModelError(string.Empty, $"РћС€РёР±РєР° СЂРµРіРёСЃС‚СЂР°С†РёРё: {errorContent}");
             ActiveTab = "register";
             return Page();
         }
