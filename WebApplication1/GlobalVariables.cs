@@ -70,6 +70,7 @@
         /// </summary>
         public const string POST_UPDATE = "/gateway/Shop/Update";
 
+        public const string GET_SHOP_PRODUCTS = "/gateway/Product/GetShopProducts?ShopId=";
         #endregion
     }
 }

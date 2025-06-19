@@ -174,6 +174,27 @@
     </div>
     </div>
 
+<!-- Модальное окно подтверждения удаления товара -->
+<div class="modal fade" id="confirmRemoveProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Удаление товара</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить этот товар?</p>
+                <p id="productToRemoveInfo"></p>
+                <input type="hidden" id="productToRemoveId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" id="confirmRemoveProductBtn">Удалить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Модальное окно добавления менеджера -->
 <div class="modal fade" id="addManagerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
@@ -231,6 +252,16 @@
             document.getElementById('saveProductBtn').addEventListener('click', addProduct);
             document.getElementById('updateProductBtn').addEventListener('click', updateProduct);
             document.getElementById('saveManagerBtn').addEventListener('click', addManager);
+                document.getElementById('confirmRemoveManagerBtn').addEventListener('click', function() {
+            const managerId = document.getElementById('managerToRemoveId').value;
+            removeManager(managerId);
+            $('#confirmRemoveManagerModal').modal('hide');
+        });
+        document.getElementById('confirmRemoveProductBtn').addEventListener('click', function() {
+            const productId = document.getElementById('productToRemoveId').value;
+            deleteProduct(productId);
+            $('#confirmRemoveProductModal').modal('hide');
+        });
         });
 
         function loadProducts() {
@@ -439,7 +470,7 @@
             });
         }
 
-        function renderProducts(products) {
+              function renderProducts(products) {
             const container = document.getElementById('productsList');
 
             if (!container) return;
@@ -478,11 +509,15 @@
                                 <button class="btn btn-outline-primary edit-product" data-id="${product.id}"
                                     data-name="${product.name}"
                                     data-price="${product.price}"
-                                    data-description="${product.description || ''}">
+                                    data-description="${product.description || ''}"
+                                    title="Редактировать">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="btn btn-outline-danger delete-product" data-id="${product.id}">
-                                    <i class="fas fa-trash"></i>
+                                <button class="btn btn-outline-danger delete-product"
+                                        data-id="${product.id}"
+                                        data-name="${product.name}"
+                                        title="Удалить">
+                                    <i class="fas fa-trash-alt"></i>
                                 </button>
                             </div>
                         </td>
@@ -514,14 +549,19 @@
             document.querySelectorAll('.delete-product').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const productId = this.getAttribute('data-id');
-                    if (confirm('Вы уверены, что хотите удалить этот товар?')) {
-                        deleteProduct(productId);
-                    }
+                    const productName = this.getAttribute('data-name');
+
+                    // Заполняем модальное окно подтверждения
+                    document.getElementById('productToRemoveId').value = productId;
+                    document.getElementById('productToRemoveInfo').textContent =
+                        `Товар: ${productName || 'Без названия'} (ID: ${productId})`;
+
+                    // Показываем модальное окно
+                    $('#confirmRemoveProductModal').modal('show');
                 });
             });
         }
-
-        function renderManagers(managers) {
+               function renderManagers(managers) {
             const container = document.getElementById('managersList');
 
             if (!container) return;
@@ -548,8 +588,9 @@
                             <button class="btn btn-sm btn-outline-danger remove-manager"
                                     data-id="${manager.id}"
                                     data-email="${manager.email}"
-                                    data-name="${manager.name || ''}">
-                                <i class="fas fa-user-times"></i>
+                                    data-name="${manager.name || ''}"
+                                    title="Удалить менеджера">
+                                <i class="fas fa-trash-alt"></i>
                             </button>
                         </div>
                     </div>
@@ -576,6 +617,8 @@
                 });
             });
         }
+        
+        
         function deleteProduct(productId) {
             fetch(`?handler=DeleteProduct&productId=${productId}`, {
                 method: 'POST',

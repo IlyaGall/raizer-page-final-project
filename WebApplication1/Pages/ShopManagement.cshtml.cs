@@ -2,6 +2,7 @@ using GlobalVariablesRP;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Configuration;
+using Model.Product;
 using ShopService.Domain;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -99,8 +100,8 @@ namespace WebApplication1.Pages
                 return BadRequest(ex.Message);
             }
         }
-       
-        
+
+
         #endregion
 
 
@@ -112,10 +113,41 @@ namespace WebApplication1.Pages
         /// </summary>
         /// <param name="shopId"></param>
         /// <returns></returns>
+        [HttpPost]
+        [ValidateAntiForgeryToken] // Атрибут на серверной стороне для проверки токена
         public async Task<JsonResult> OnGetProducts(int shopId)
         {
+            
+
             // Получаем товары магазина из БД
             // var products = await _productService.GetProductsByShopAsync(shopId);
+            // Токен уже проверен автоматически
+            try
+            {
+                var response = await _client.GetAsync(
+                  $"{GlobalVariables.GETWAY_OCELOT}" +
+                  $"{GlobalVariables.GET_SHOP_PRODUCTS}{shopId}");
+                string s= $"{GlobalVariables.GETWAY_OCELOT}"+
+                  $"{GlobalVariables.GET_SHOP_PRODUCTS}{shopId}";
+                if (response.IsSuccessStatusCode)
+                {
+                  var responseBody =  response.Content.ReadAsStringAsync();
+
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                        PropertyNameCaseInsensitive = true
+                    };
+                    var item = JsonSerializer.Deserialize<Product>(responseBody, options);
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+               // return BadRequest(ex.Message);
+            }
+
 
             var products = new[]
             {
@@ -298,6 +330,16 @@ namespace WebApplication1.Pages
         public string Description { get; set; }
         public string Address { get; set; }
         public string ContactInfo { get; set; }
+    }
+
+
+    public class Products 
+    {
+        int Id { get; set; }
+
+        string Name { get; set; }
+
+        double Price { get; set; }
     }
 
     public class ProductCreateRequest
