@@ -6,6 +6,7 @@ using Model.Product;
 using ShopService.Domain;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using WebApplication1.Model.Product.ProductDto;
 using WebApplication1.Model.Shop;
 
 namespace WebApplication1.Pages
@@ -131,15 +132,35 @@ namespace WebApplication1.Pages
                   $"{GlobalVariables.GET_SHOP_PRODUCTS}{shopId}";
                 if (response.IsSuccessStatusCode)
                 {
-                  var responseBody =  response.Content.ReadAsStringAsync();
+                  var responseBody = await response.Content.ReadAsStringAsync();
 
                     var options = new JsonSerializerOptions
                     {
                         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                         PropertyNameCaseInsensitive = true
                     };
-                    var item = JsonSerializer.Deserialize<Product>(responseBody, options);
+                    var items = JsonSerializer.Deserialize<List<ProductDto>>(responseBody, options);
 
+
+                    if (items == null || items.Count == 0)
+                    {
+                        return null;
+                    }
+                    var result = items.Select(item => new
+                    {
+                        Id = item.ShopId,
+                        Name = item.NameProduct,
+                        Price = item.Price
+                    })
+                     .ToList();
+
+
+                    return new JsonResult(result);
+
+                    foreach (var item in items)
+                    {
+                        
+                    }
                 }
 
             }
@@ -149,13 +170,14 @@ namespace WebApplication1.Pages
             }
 
 
-            var products = new[]
-            {
-                new { Id = 1, Name = "Товар 1", Price = 1000 },
-                new { Id = 2, Name = "Товар 2", Price = 2000 }
-            };
+            //var products = new[]
+            //{
+            //    new { Id = 1, Name = "Товар 1", Price = 1000 },
+            //    new { Id = 2, Name = "Товар 2", Price = 2000 }
+            //};
 
-            return new JsonResult(products);
+           // return new JsonResult(products);
+            return null;
         }
 
         /// <summary>
@@ -182,11 +204,11 @@ namespace WebApplication1.Pages
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<IActionResult> OnPostUpdateProduct([FromBody] ProductUpdateRequest request)
+        public async Task<IActionResult> OnPostUpdateProduct([FromBody] ProductDto request)
         {
             try
             {
-                var response = await _client.PutAsJsonAsync($"{GlobalVariables.GETWAY_OCELOT}products/{request.Id}", request);
+                var response = await _client.PutAsJsonAsync($"{GlobalVariables.GETWAY_OCELOT}products/{request.ProductId}", request);
                 if (response.IsSuccessStatusCode)
                 {
                     return new OkResult();
