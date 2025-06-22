@@ -109,8 +109,9 @@
 </div>
 
 <!-- Модальное окно добавления товара -->
+<!-- Модальное окно добавления товара -->
 <div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Добавить товар</h5>
@@ -118,17 +119,38 @@
             </div>
             <div class="modal-body">
                 <form id="addProductForm">
-                    <div class="mb-3">
-                        <label for="productName" class="form-label">Название</label>
-                        <input type="text" class="form-control" id="productName" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="productPrice" class="form-label">Цена</label>
-                        <input type="number" class="form-control" id="productPrice" required>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productName" class="form-label">Название товара</label>
+                                <input type="text" class="form-control" id="productName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="productPrice" class="form-label">Цена</label>
+                                <div class="input-group">
+                                    <input type="number" step="0.01" class="form-control" id="productPrice" required>
+                                    <span class="input-group-text">₽</span>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="productBarcode" class="form-label">Штрихкод</label>
+                                <input type="number" class="form-control" id="productBarcode">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productModelNumber" class="form-label">Номер модели</label>
+                                <input type="text" class="form-control" id="productModelNumber">
+                            </div>
+                            <div class="mb-3">
+                                <label for="productClusterId" class="form-label">ID кластера</label>
+                                <input type="number" class="form-control" id="productClusterId">
+                            </div>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="productDescription" class="form-label">Описание</label>
-                        <textarea class="form-control" id="productDescription" rows="3"></textarea>
+                        <textarea class="form-control" id="productDescription" rows="4"></textarea>
                     </div>
                     <input type="hidden" id="productShopId" value="@Model.Shop.Id">
                 </form>
@@ -220,6 +242,7 @@
     </div>
 </div>
 
+
 <!-- Модальное окно добавления менеджера -->
 <div class="modal fade" id="addManagerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
@@ -231,10 +254,22 @@
             <div class="modal-body">
                 <form id="addManagerForm">
                     <div class="mb-3">
-                        <label for="managerEmail" class="form-label">Email пользователя</label>
-                        <input type="email" class="form-control" id="managerEmail" required>
+                        <label for="managerUserName" class="form-label">Никнейм пользователя</label>
+                        <input type="text" class="form-control" id="managerUserName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="managerUserId" class="form-label">ID пользователя</label>
+                        <input type="number" class="form-control" id="managerUserId" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="managerRole" class="form-label">Роль пользователя</label>
+                        <select class="form-control" id="managerRole" required>
+                            <option value="Manager">Менеджер</option>
+                            <option value="Admin">Администратор</option>
+                        </select>
                     </div>
                     <input type="hidden" id="shopId" value="@Model.Shop.Id">
+                    <input type="hidden" id="shopName" value="@Model.Shop.Name">
                 </form>
             </div>
             <div class="modal-footer">
@@ -277,9 +312,11 @@
             document.getElementById('saveProductBtn').addEventListener('click', addProduct);
             document.getElementById('updateProductBtn').addEventListener('click', updateProduct);
             document.getElementById('saveManagerBtn').addEventListener('click', addManager);
-                document.getElementById('confirmRemoveManagerBtn').addEventListener('click', function() {
+              
+            document.getElementById('confirmRemoveManagerBtn').addEventListener('click', function() {
             const managerId = document.getElementById('managerToRemoveId').value;
             removeManager(managerId);
+
             $('#confirmRemoveManagerModal').modal('hide');
         });
         document.getElementById('confirmRemoveProductBtn').addEventListener('click', function() {
@@ -329,39 +366,118 @@
                 });
         }
 
-        function addManager() {
-            const email = document.getElementById('managerEmail').value.trim();
-            const shopId = document.getElementById('shopId').value;
-
-            if (!email) {
-                alert('Пожалуйста, введите email менеджера');
+              function addManager() {
+            const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (!tokenElement) {
+                console.error('Anti-forgery token not found');
+                alert('Ошибка безопасности. Пожалуйста, обновите страницу.');
                 return;
             }
 
-            fetch(`?handler=AddManager`, {
+            // Формируем данные запроса
+            const requestData = {
+                userName: document.getElementById('managerUserName').value.trim(),
+                userId: parseInt(document.getElementById('managerUserId').value),
+                roleUser: document.getElementById('managerRole').value,
+                shopId: parseInt(document.getElementById('shopId').value),
+                nameShop: document.getElementById('shopName').value
+            };
+
+            // Валидация на клиенте
+            if (!requestData.userName) {
+                alert('Пожалуйста, введите никнейм пользователя');
+                return;
+            }
+
+            if (isNaN(requestData.userId) || requestData.userId <= 0) {
+                alert('Пожалуйста, введите корректный ID пользователя');
+                return;
+            }
+
+            if (!requestData.roleUser) {
+                alert('Пожалуйста, выберите роль пользователя');
+                return;
+            }
+
+            // Отправка данных
+            fetch('?handler=AddManager', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    'RequestVerificationToken': tokenElement.value
                 },
-                body: JSON.stringify({ shopId, email })
+                body: JSON.stringify(requestData)
             })
-            .then(response => {
-                if (response.ok) {
+            .then(async response => {
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Неизвестная ошибка сервера');
+                }
+
+                return data;
+            })
+            .then(data => {
+                if (data.success) {
                     $('#addManagerModal').modal('hide');
-                    document.getElementById('managerEmail').value = '';
-                    loadManagers();
-                } else {
-                    return response.text().then(text => { throw new Error(text) });
+                    document.getElementById('addManagerForm').reset();
+
+                    // Мгновенное обновление интерфейса без загрузки с сервера
+                    const managersList = document.getElementById('managersList');
+                    if (managersList) {
+                        const newManagerHtml = `
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">${requestData.userName}</h6>
+                                    <small class="text-muted">${requestData.roleUser}</small>
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-danger remove-manager"
+                                            data-id="${requestData.userId}"
+                                            data-email="${requestData.roleUser}"
+                                            data-name="${requestData.userName}"
+                                            title="Удалить менеджера">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+
+                        // Добавляем нового менеджера в начало списка
+                        if (managersList.querySelector('.list-group')) {
+                            managersList.querySelector('.list-group').insertAdjacentHTML('afterbegin', newManagerHtml);
+                        } else {
+                            managersList.innerHTML = `<div class="list-group">${newManagerHtml}</div>`;
+                        }
+
+                        // Добавляем обработчик для новой кнопки
+                        const newBtn = managersList.querySelector('.remove-manager');
+                        if (newBtn) {
+                            newBtn.addEventListener('click', function() {
+                                const managerId = this.getAttribute('data-id');
+                                const managerEmail = this.getAttribute('data-email');
+                                const managerName = this.getAttribute('data-name');
+
+                                document.getElementById('managerToRemoveId').value = managerId;
+                                document.getElementById('managerToRemoveInfo').textContent =
+                                    `${managerName ? managerName + ' (' + managerEmail + ')' : managerEmail}`;
+
+                                $('#confirmRemoveManagerModal').modal('show');
+                            });
+                        }
+                    }
+
+                    showSuccessMessage('Менеджер успешно добавлен');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert(`Ошибка при добавлении менеджера: ${error.message}`);
+                alert(error.message);
             });
         }
-
-                  function updateShop() {
+        
+        
+        function updateShop() {
             // Получаем токен безопасности
             const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
             if (!tokenElement) {
@@ -378,7 +494,7 @@
                 address: document.getElementById('shopAddressEdit')?.value,
                 contactInfo: document.getElementById('shopContactInfoEdit')?.value
             };
-
+            console.log(shopData);
             // Проверяем заполненность полей
             if (!shopData.name || !shopData.description || !shopData.address || !shopData.contactInfo) {
                 alert('Пожалуйста, заполните все обязательные поля');
@@ -430,13 +546,23 @@
                 container.insertBefore(alertDiv, container.firstChild);
             }
         }
+
         function addProduct() {
             const productData = {
-                name: document.getElementById('productName').value,
-                price: document.getElementById('productPrice').value,
+                shopId: parseInt(document.getElementById('productShopId').value),
+                clusterId: parseInt(document.getElementById('productClusterId').value || 0),
+                nameProduct: document.getElementById('productName').value,
                 description: document.getElementById('productDescription').value,
-                shopId: document.getElementById('productShopId').value
+                price: parseFloat(document.getElementById('productPrice').value),
+                barcode: parseInt(document.getElementById('productBarcode').value || 0),
+                modelNumber: document.getElementById('productModelNumber').value
             };
+
+            // Валидация
+            if (!productData.nameProduct || isNaN(productData.price) || productData.price <= 0) {
+                alert('Пожалуйста, укажите название товара и корректную цену');
+                return;
+            }
 
             fetch('?handler=SaveProduct', {
                 method: 'POST',
@@ -447,7 +573,13 @@
                 body: JSON.stringify(productData)
             })
             .then(response => {
-                if (response.ok) {
+                if (!response.ok) {
+                    return response.text().then(text => { throw new Error(text) });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
                     $('#addProductModal').modal('hide');
                     document.getElementById('addProductForm').reset();
                     loadProducts();
@@ -455,37 +587,46 @@
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Ошибка при добавлении товара');
+                alert('Ошибка при добавлении товара: ' + error.message);
             });
         }
 
-        function openEditProductModal(product) {
+
+        function openEditProductModal(product) 
+        {
               // Видные поля
-        document.getElementById('editProductName').value = product.nameProduct || '';
-        document.getElementById('editProductPrice').value = product.price || '';
-        document.getElementById('editProductDescription').value = product.description || '';
-        document.getElementById('editProductBarcode').value = product.barcode || '';
-        document.getElementById('editProductModelNumber').value = product.modelNumber || '';
-        document.getElementById('editProductClusterId').value = product.clusterId || '';
+            document.getElementById('editProductName').value = product.nameProduct || '';
+            document.getElementById('editProductPrice').value = product.price || '';
+            document.getElementById('editProductDescription').value = product.description || '';
+            document.getElementById('editProductBarcode').value = product.barcode || '';
+            document.getElementById('editProductModelNumber').value = product.modelNumber || '';
+            document.getElementById('editProductClusterId').value = product.clusterId || '';
+            document.getElementById('editProductDescription').value = product.description || '';
 
-        // спрятые поля
-        document.getElementById('editProductId').value = product.productId;
-        document.getElementById('editProductShopId').value = product.shopId;
+            // спрятые поля
+            document.getElementById('editProductId').value = product.productId;
+            document.getElementById('editProductShopId').value = product.shopId;
 
-        $('#editProductModal').modal('show');
+            $('#editProductModal').modal('show');
         }
 
-            function updateProduct() {
+        function updateProduct() {
             const productData = {
-                productId: document.getElementById('editProductId').value,
-                shopId: document.getElementById('editProductShopId').value,
-                clusterId: document.getElementById('editProductClusterId').value,
-                nameProduct: document.getElementById('editProductName').value,
-                description: document.getElementById('editProductDescription').value,
-                price: document.getElementById('editProductPrice').value,
-                barcode: document.getElementById('editProductBarcode').value,
-                modelNumber: document.getElementById('editProductModelNumber').value
+                ProductId: parseInt(document.getElementById('editProductId').value),
+                ClusterId: parseInt(document.getElementById('editProductClusterId').value),
+                NameProduct: document.getElementById('editProductName').value,
+                Description: document.getElementById('editProductDescription').value,
+                Price: parseFloat(document.getElementById('editProductPrice').value),
+                Barcode: parseInt(document.getElementById('editProductBarcode').value),
+                ModelNumber: document.getElementById('editProductModelNumber').value
             };
+
+            // Валидация данных перед отправкой
+            if (isNaN(productData.ProductId) || isNaN(productData.ClusterId) ||
+                isNaN(productData.Price) || isNaN(productData.Barcode)) {
+                alert('Пожалуйста, проверьте числовые поля (ID, Цена, Штрихкод)');
+                return;
+            }
 
             fetch('?handler=UpdateProduct', {
                 method: 'POST',
@@ -496,19 +637,25 @@
                 body: JSON.stringify(productData)
             })
             .then(response => {
-                if (response.ok) {
-                    $('#editProductModal').modal('hide');
-                    loadProducts();
-                } else {
-                    return response.text().then(text => { throw new Error(text) });
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.message || 'Не удалось обновить товар');
+                    });
                 }
+                return response.json();
+            })
+            .then(() => {
+                $('#editProductModal').modal('hide');
+                loadProducts();
             })
             .catch(error => {
                 console.error('Error:', error);
                 alert(`Ошибка при обновлении товара: ${error.message}`);
             });
         }
-              function renderProducts(products) {
+
+
+        function renderProducts(products) {
             const container = document.getElementById('productsList');
 
             if (!container) return;
@@ -529,7 +676,9 @@
                             <tr>
                                 <th>Название</th>
                                 <th>Цена</th>
-                                <th>Описание</th>
+                                <th>Штрихкод</th>
+                                <th>Модель</th>
+                                <th>Кластер</th>
                                 <th>Действия</th>
                             </tr>
                         </thead>
@@ -539,21 +688,28 @@
             products.forEach(product => {
                 html += `
                     <tr>
-                        <td>${product.name || 'Не указано'}</td>
+                        <td>${product.nameProduct || 'Не указано'}</td>
                         <td>${product.price ? `${product.price} ₽` : 'Не указана'}</td>
-                        <td>${product.description || 'Нет описания'}</td>
+                        <td>${product.barcode || 'Не указан'}</td>
+                        <td>${product.modelNumber || 'Не указана'}</td>
+                        <td>${product.clusterId || 'Не указан'}</td>
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-primary edit-product" data-id="${product.id}"
-                                    data-name="${product.name}"
+                                <button class="btn btn-outline-primary edit-product"
+                                    data-productid="${product.productId}"
+                                    data-shopid="${product.shopId}"
+                                    data-clusterid="${product.clusterId}"
+                                    data-nameproduct="${product.nameProduct}"
                                     data-price="${product.price}"
                                     data-description="${product.description || ''}"
+                                    data-barcode="${product.barcode || ''}"
+                                    data-modelnumber="${product.modelNumber || ''}"
                                     title="Редактировать">
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 <button class="btn btn-outline-danger delete-product"
-                                        data-id="${product.id}"
-                                        data-name="${product.name}"
+                                        data-id="${product.productId}"
+                                        data-name="${product.nameProduct}"
                                         title="Удалить">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
@@ -571,34 +727,44 @@
 
             container.innerHTML = html;
 
-            // Обработчики для кнопок
+            // Обработчики для кнопок редактирования
             document.querySelectorAll('.edit-product').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const product = {
-                        id: this.getAttribute('data-id'),
-                        name: this.getAttribute('data-name'),
+                        productId: this.getAttribute('data-productid'),
+                        shopId: this.getAttribute('data-shopid'),
+                        clusterId: this.getAttribute('data-clusterid'),
+                        nameProduct: this.getAttribute('data-nameproduct'),
                         price: this.getAttribute('data-price'),
-                        description: this.getAttribute('data-description')
+                        description: this.getAttribute('data-description'),
+                        barcode: this.getAttribute('data-barcode'),
+                        modelNumber: this.getAttribute('data-modelnumber')
                     };
                     openEditProductModal(product);
                 });
             });
 
+            // Обработчики для кнопок удаления
             document.querySelectorAll('.delete-product').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const productId = this.getAttribute('data-id');
                     const productName = this.getAttribute('data-name');
 
-                    // Заполняем модальное окно подтверждения
                     document.getElementById('productToRemoveId').value = productId;
                     document.getElementById('productToRemoveInfo').textContent =
                         `Товар: ${productName || 'Без названия'} (ID: ${productId})`;
 
-                    // Показываем модальное окно
                     $('#confirmRemoveProductModal').modal('show');
                 });
             });
         }
+
+
+
+
+
+
+
                function renderManagers(managers) {
             const container = document.getElementById('managersList');
 
@@ -638,7 +804,7 @@
             html += '</div>';
             container.innerHTML = html;
 
-            // Обработчики для кнопок удаления
+            // Обработчики для кнопок удаления (ТОЛЬКО ОДИН РАЗ)
             document.querySelectorAll('.remove-manager').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const managerId = this.getAttribute('data-id');
@@ -655,14 +821,21 @@
                 });
             });
         }
-        
-        
+
         function deleteProduct(productId) {
-            fetch(`?handler=DeleteProduct&productId=${productId}`, {
-                method: 'POST',
+            // Создаем объект DTO
+           console.log(productId);
+            const deleteDto = {
+                Id: parseInt(productId) // Соответствует свойству в DeleteProductDto
+            };
+             console.log(deleteDto);
+            fetch(`?handler=DeleteProduct`, {
+                method: 'POST', // Или 'DELETE' не поддерживается!!!!
                 headers: {
+                    'Content-Type': 'application/json',
                     'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                }
+                },
+                body: JSON.stringify(deleteDto) // Сериализуем объект в JSON
             })
             .then(response => {
                 if (response.ok) {
@@ -676,33 +849,58 @@
                 alert('Произошла ошибка при удалении товара');
             });
         }
-
       
-                // Обработчик подтверждения удаления менеджера
-        document.getElementById('confirmRemoveManagerBtn').addEventListener('click', function() {
-            const managerId = document.getElementById('managerToRemoveId').value;
-            removeManager(managerId);
-            $('#confirmRemoveManagerModal').modal('hide');
-        });
+     
 
-        // Функция removeManager остается без изменений
-        function removeManager(managerId) {
-            fetch(`?handler=RemoveManager&managerId=${managerId}&shopId=@Model.Shop.Id`, {
+
+
+
+                function removeManager(managerId) {
+            const deleteDto = {
+                UserId: parseInt(managerId),
+                ShopId: parseInt(@Model.Shop.Id)
+            };
+
+            console.log("Отправляемые данные:", deleteDto);
+
+            // Находим элемент для удаления
+            const managerItem = document.querySelector(`.remove-manager[data-id="${managerId}"]`)?.closest('.list-group-item');
+
+            fetch(`?handler=RemoveManager`, {
                 method: 'POST',
                 headers: {
+                    'Content-Type': 'application/json',
                     'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                }
+                },
+                body: JSON.stringify(deleteDto)
             })
             .then(response => {
-                if (response.ok) {
-                    loadManagers();
-                } else {
-                    alert('Не удалось удалить менеджера');
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || 'Ошибка сервера');
+                    });
                 }
+
+                // Мгновенно удаляем менеджера из DOM
+                if (managerItem) {
+                    managerItem.remove();
+
+                    // Если список пуст, показываем сообщение
+                    const managersList = document.getElementById('managersList');
+                    if (managersList && managersList.querySelectorAll('.list-group-item').length === 0) {
+                        managersList.innerHTML = `
+                            <div class="alert alert-info">
+                                В магазине пока нет менеджеров
+                            </div>
+                        `;
+                    }
+                }
+
+                showSuccessMessage('Менеджер успешно удалён');
             })
             .catch(error => {
-                console.error('Error:', error);
-                alert('Произошла ошибка при удалении менеджера');
+                console.error('Ошибка:', error);
+                alert('Ошибка при удалении менеджера: ' + error.message);
             });
         }
     </script>

@@ -110,7 +110,6 @@ namespace WebApplication1.Pages
 
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["SuccessMessage"] = "Данные успешно обновлены";
                     return RedirectToPage();
                 }
                 else
@@ -133,20 +132,43 @@ namespace WebApplication1.Pages
         // Метод для обработки AJAX запросов
         public async Task<JsonResult> OnGetUserData()
         {
-            using var apiClient = new ConnectServer();
-            var user = await apiClient.GetAsync<UserDto>(GlobalVariables.GET_INFO_USER, Request.Cookies["JWTToken"]);
-            // Здесь можно получить данные пользователя из базы данных
-            var userData = new
+            var options = new JsonSerializerOptions
             {
-                FullName = $"{user.Data.Surname} {user.Data.Name} {user.Data.Patronymic}",
-                Email = $"{user.Data.Email}",
-                Phone = $"{user.Data.NumberPhone}",
-                Position = "Менеджер по продажам",
-                Department = "Отдел продаж",
-                HireDate = "15.03.2020"
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = true
             };
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
 
-            return new JsonResult(userData);
+            var response = await _client.GetAsync(
+                $"{GlobalVariables.GETWAY_OCELOT}" +
+                $"{GlobalVariables.GET_INFO_USER}"); //Объект не нужен, так как передаём jwt токен
+
+            if (response.IsSuccessStatusCode)
+            {
+                string responseBody = await response.Content.ReadAsStringAsync();
+
+
+                // Далее десериализация JSON 
+                var items = JsonSerializer.Deserialize<UserDto>(responseBody, options);
+
+                //var result = items.Select(item => new
+                //{
+                //    Login = item.Login,
+                //    name = item.Name,
+                //    surname = item.Surname,
+                //    Patronymic = item.Patronymic,
+                //    numberPhone = item.NumberPhone,
+                //    Email = item.Email,
+                //    telegramID = item.TelegramID,
+                //})
+                // .ToList();
+
+
+
+
+                return new JsonResult(items);
+            }
+            return new JsonResult("");
         }
 
         public JsonResult OnGetFavorites()

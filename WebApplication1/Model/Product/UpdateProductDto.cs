@@ -1,8 +1,6 @@
-﻿using System.Text.Json.Serialization;
-
-namespace WebApplication1.Model.Product.ProductDto
+﻿namespace ProductService.BLL
 {
-    public class ProductDto
+    public class UpdateProductDto
     {
         /// <summary>
         /// ClusterId продукта
@@ -10,10 +8,6 @@ namespace WebApplication1.Model.Product.ProductDto
         public int ProductId { get; set; }
         /// <summary>
         /// ClusterId магазина
-        /// </summary>
-        public int ShopId { get; set; }
-        /// <summary>
-        /// ClusterId кластера
         /// </summary>
         public int ClusterId { get; set; }
         /// <summary>
@@ -36,6 +30,5 @@ namespace WebApplication1.Model.Product.ProductDto
         /// Номер модели
         /// </summary>
         public string ModelNumber { get; set; }
-
     }
 }

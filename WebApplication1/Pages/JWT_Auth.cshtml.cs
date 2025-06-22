@@ -70,7 +70,7 @@ namespace WebApplication1.Pages
                         HttpOnly = true, // Защита от XSS js не сможет работать с печенькой(
                         Secure = true, // Только HTTPS
                         SameSite = SameSiteMode.Strict, // Защита от CSRF
-                        Expires = DateTimeOffset.Now.AddMinutes(30),
+                        Expires = DateTime.UtcNow.AddMinutes(69),
                         Path = "/" // Доступно для всех путей
                     });
                     // Не сохраняем токен в сессии - это избыточно при использовании кук

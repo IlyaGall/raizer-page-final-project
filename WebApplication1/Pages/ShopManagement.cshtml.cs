@@ -1,16 +1,25 @@
+п»їusing AuthService.BLL.Dto;
+using AuthService.Dto;
+using ConnectBackEnd;
 using GlobalVariablesRP;
+using ManagersShopsService.BLL.Dto;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Configuration;
-using Model.Product;
+using Microsoft.Extensions.Options;
+using Model.User;
+using ProductService.BLL;
+using ShopService.BLL;
 using ShopService.Domain;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using WebApplication1.Model.Product.ProductDto;
-using WebApplication1.Model.Shop;
+
 
 namespace WebApplication1.Pages
 {
+    [Authorize]
     public class ShopManagementModel : PageModel
     {
         private readonly HttpClient _client;
@@ -27,17 +36,17 @@ namespace WebApplication1.Pages
 
         public Shop Shop { get; set; }
 
-        public async  Task OnGetAsync()
+        public async Task OnGetAsync()
         {
 
-           // _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+            // _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
             var response = await _client.GetAsync(
                 $"{GlobalVariables.GETWAY_OCELOT}" +
                 $"{GlobalVariables.GET_INFO_SHOP}{Id}");
 
             if (response.IsSuccessStatusCode)
             {
-              
+
                 string responseBody = await response.Content.ReadAsStringAsync();
                 var options = new JsonSerializerOptions
                 {
@@ -54,47 +63,49 @@ namespace WebApplication1.Pages
                     Adress = item.Adress,
                     ContactInfo = item.ContactInfo
                 };
-                TempData["SuccessMessage"] = "Данные успешно обновлены";
+                //TempData["SuccessMessage"] = "Р”Р°РЅРЅС‹Рµ СѓСЃРїРµС€РЅРѕ РѕР±РЅРѕРІР»РµРЅС‹";
             }
             else
             {
-            
-                TempData["SuccessMessage"] += "Ошибка при обновлении данных по магазину";
-               
-            }
-            // Получаем информацию о магазине из БД
-            // Shop = await _shopService.GetShopByIdAsync(Id);
 
-            // Временные mock данные
-            //Shop = new Shop
-            //{
-            //    Id = Id,
-            //    Name = "Мой магазин",
-            //    Description = "Описание магазина",
-            //    Adress = "ул. Примерная, 123",
-            //    ContactInfo = "contact@example.com"
-            //};
+                TempData["SuccessMessage"] += "РћС€РёР±РєР° РїСЂРё РѕР±РЅРѕРІР»РµРЅРёРё РґР°РЅРЅС‹С… РїРѕ РјР°РіР°Р·РёРЅСѓ";
+
+            }
+            
         }
 
 
-        #region Работа с магазином
+        #region Р Р°Р±РѕС‚Р° СЃ РјР°РіР°Р·РёРЅРѕРј
         [HttpPost]
-        [ValidateAntiForgeryToken] // Атрибут на серверной стороне для проверки токена
-        public async Task<IActionResult> OnPostUpdateShop([FromBody] ShopUpdateRequest request)
+        [ValidateAntiForgeryToken] // РђС‚СЂРёР±СѓС‚ РЅР° СЃРµСЂРІРµСЂРЅРѕР№ СЃС‚РѕСЂРѕРЅРµ РґР»СЏ РїСЂРѕРІРµСЂРєРё С‚РѕРєРµРЅР°
+        public async Task<IActionResult> OnPostUpdateShop([FromBody] UpdateShopDto request)
         {
-            // Токен уже проверен автоматически
+            // РўРѕРєРµРЅ СѓР¶Рµ РїСЂРѕРІРµСЂРµРЅ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals
+            };
+
             if (!ModelState.IsValid)
             {
                 return Page();
             }
             try
             {
-                var response = await _client.PutAsJsonAsync($"{GlobalVariables.GETWAY_OCELOT}shops/{request.Id}", request);
-                if (response.IsSuccessStatusCode)
+
+                _client.DefaultRequestHeaders.Authorization =
+              new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+
+                var response = await _client.PutAsJsonAsync(
+                    $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.PUT_SHOP_UPDATE}",
+                    request);
+
+                if (!response.IsSuccessStatusCode)
                 {
-                    return new OkResult();
+                    return BadRequest(await response.Content.ReadAsStringAsync());
                 }
-                return BadRequest(await response.Content.ReadAsStringAsync());
+                return new JsonResult(new { success = true });
             }
             catch (Exception ex)
             {
@@ -107,32 +118,32 @@ namespace WebApplication1.Pages
 
 
 
-        #region  Работа с товарами
+        #region  Р Р°Р±РѕС‚Р° СЃ С‚РѕРІР°СЂР°РјРё
 
         /// <summary>
-        /// Загрузка товаров для магазина из бд
+        /// Р—Р°РіСЂСѓР·РєР° С‚РѕРІР°СЂРѕРІ РґР»СЏ РјР°РіР°Р·РёРЅР° РёР· Р±Рґ
         /// </summary>
         /// <param name="shopId"></param>
         /// <returns></returns>
         [HttpPost]
-        [ValidateAntiForgeryToken] // Атрибут на серверной стороне для проверки токена
+        [ValidateAntiForgeryToken] // РђС‚СЂРёР±СѓС‚ РЅР° СЃРµСЂРІРµСЂРЅРѕР№ СЃС‚РѕСЂРѕРЅРµ РґР»СЏ РїСЂРѕРІРµСЂРєРё С‚РѕРєРµРЅР°
         public async Task<JsonResult> OnGetProducts(int shopId)
         {
-            
 
-            // Получаем товары магазина из БД
+
+            // РџРѕР»СѓС‡Р°РµРј С‚РѕРІР°СЂС‹ РјР°РіР°Р·РёРЅР° РёР· Р‘Р”
             // var products = await _productService.GetProductsByShopAsync(shopId);
-            // Токен уже проверен автоматически
+            // РўРѕРєРµРЅ СѓР¶Рµ РїСЂРѕРІРµСЂРµРЅ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё
             try
             {
                 var response = await _client.GetAsync(
                   $"{GlobalVariables.GETWAY_OCELOT}" +
                   $"{GlobalVariables.GET_SHOP_PRODUCTS}{shopId}");
-                string s= $"{GlobalVariables.GETWAY_OCELOT}"+
+                string s = $"{GlobalVariables.GETWAY_OCELOT}" +
                   $"{GlobalVariables.GET_SHOP_PRODUCTS}{shopId}";
                 if (response.IsSuccessStatusCode)
                 {
-                  var responseBody = await response.Content.ReadAsStringAsync();
+                    var responseBody = await response.Content.ReadAsStringAsync();
 
                     var options = new JsonSerializerOptions
                     {
@@ -144,76 +155,134 @@ namespace WebApplication1.Pages
 
                     if (items == null || items.Count == 0)
                     {
-                        return null;
+                        return new JsonResult(Array.Empty<object>());
                     }
                     var result = items.Select(item => new
                     {
-                        Id = item.ShopId,
-                        Name = item.NameProduct,
-                        Price = item.Price
+                        productId = item.ProductId,
+                        nameProduct = item.NameProduct,
+                        Price = item.Price,
+                        modelNumber = item.ModelNumber,
+                        clusterId = item.ClusterId,
+                        barcode = item.Barcode,
+                        Description = item.Description
+
+
                     })
                      .ToList();
-
+                    /* < td >${ product.nameProduct || 'РќРµ СѓРєР°Р·Р°РЅРѕ'}</ td >
+                         < td >${ product.price ? `${ product.price} в‚Ѕ` : 'РќРµ СѓРєР°Р·Р°РЅР°'}</ td >
+                         < td >${ product.barcode || 'РќРµ СѓРєР°Р·Р°РЅ'}</ td >
+                         < td >${ product.modelNumber || 'РќРµ СѓРєР°Р·Р°РЅР°'}</ td >
+                         < td >${ product.clusterId || 'РќРµ СѓРєР°Р·Р°РЅ'}</ td >*/
 
                     return new JsonResult(result);
 
-                    foreach (var item in items)
-                    {
-                        
-                    }
+                   
                 }
 
             }
             catch (Exception ex)
             {
-               // return BadRequest(ex.Message);
+                // return BadRequest(ex.Message);
             }
 
 
             //var products = new[]
             //{
-            //    new { Id = 1, Name = "Товар 1", Price = 1000 },
-            //    new { Id = 2, Name = "Товар 2", Price = 2000 }
+            //    new { Id = 1, Name = "РўРѕРІР°СЂ 1", Price = 1000 },
+            //    new { Id = 2, Name = "РўРѕРІР°СЂ 2", Price = 2000 }
             //};
 
-           // return new JsonResult(products);
-            return null;
+            // return new JsonResult(products);
+            return new JsonResult(Array.Empty<object>()); ;
         }
 
         /// <summary>
-        /// Удаление товара из магазина
+        /// РЈРґР°Р»РµРЅРёРµ С‚РѕРІР°СЂР° РёР· РјР°РіР°Р·РёРЅР°
         /// </summary>
         /// <param name="productId"></param>
         /// <returns></returns>
-        public async Task<IActionResult> OnPostDeleteProductAsync(int productId)
+        [HttpDelete]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> OnPostDeleteProductAsync([FromBody] DeleteProductDto deleteDto)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                // Удаляем товар
-                // await _productService.DeleteProductAsync(productId);
-                return new OkResult();
+                return Page();
             }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
 
-        /// <summary>
-        /// Обновление продукта
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        public async Task<IActionResult> OnPostUpdateProduct([FromBody] ProductDto request)
-        {
+
             try
             {
-                var response = await _client.PutAsJsonAsync($"{GlobalVariables.GETWAY_OCELOT}products/{request.ProductId}", request);
+                // РЈРґР°Р»СЏРµРј С‚РѕРІР°СЂ
+                // Р”РѕР±Р°РІР»СЏРµРј С‚РѕРєРµРЅ Р°РІС‚РѕСЂРёР·Р°С†РёРё
+                _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+
+
+                var request = new HttpRequestMessage(HttpMethod.Delete,
+            $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.DELETE_PRODUCT}")
+                {
+                    Content = new StringContent(
+                JsonSerializer.Serialize(deleteDto),
+                Encoding.UTF8,
+                "application/json")
+                };
+
+                var response = await _client.SendAsync(request);
+
+                // РћС‚РїСЂР°РІР»СЏРµРј DELETE Р·Р°РїСЂРѕСЃ СЃ С‚РµР»РѕРј
+
+
+
                 if (response.IsSuccessStatusCode)
                 {
                     return new OkResult();
                 }
-                return BadRequest(await response.Content.ReadAsStringAsync());
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            return BadRequest();
+        }
+
+        /// <summary>
+        /// РћР±РЅРѕРІР»РµРЅРёРµ РїСЂРѕРґСѓРєС‚Р°
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> OnPostUpdateProduct([FromBody] UpdateProductDto request)
+        {
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals
+            };
+
+            if (!ModelState.IsValid)
+            {
+                return Page();
+            }
+            try
+            {
+
+                _client.DefaultRequestHeaders.Authorization =
+              new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+
+                var response = await _client.PutAsJsonAsync(
+                    $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.UPDATE_PRODUCT}",
+                    request);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return BadRequest(await response.Content.ReadAsStringAsync());
+                }
+                return new JsonResult(new { success = true });
             }
             catch (Exception ex)
             {
@@ -222,12 +291,20 @@ namespace WebApplication1.Pages
         }
 
         /// <summary>
-        /// Добовление продукта
+        /// Р”РѕР±РѕРІР»РµРЅРёРµ РїСЂРѕРґСѓРєС‚Р°
         /// </summary>
         /// <param name="product"></param>
         /// <returns></returns>
-        public async Task<IActionResult> OnPostSaveProductAsync([FromBody] ProductSave product)
+        [HttpPost]
+        [ValidateAntiForgeryToken] // РђС‚СЂРёР±СѓС‚ РЅР° СЃРµСЂРІРµСЂРЅРѕР№ СЃС‚РѕСЂРѕРЅРµ РґР»СЏ РїСЂРѕРІРµСЂРєРё С‚РѕРєРµРЅР°
+        public async Task<IActionResult> OnPostSaveProductAsync([FromBody] AddProductDto product)
         {
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals
+            };
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -235,81 +312,110 @@ namespace WebApplication1.Pages
 
             try
             {
-                // 1. Проверка авторизации и прав
+                // 1. РџСЂРѕРІРµСЂРєР° Р°РІС‚РѕСЂРёР·Р°С†РёРё
                 if (!User.Identity.IsAuthenticated)
                 {
                     return Unauthorized();
                 }
 
-                // 2. Валидация данных
-                if (string.IsNullOrWhiteSpace(product.Name) || product.Price <= 0)
+                // 2. Р’Р°Р»РёРґР°С†РёСЏ РґР°РЅРЅС‹С…
+                if (string.IsNullOrWhiteSpace(product.NameProduct) || product.Price <= 0)
                 {
-                    return BadRequest("Название и цена товара обязательны");
+                    return BadRequest("РќР°Р·РІР°РЅРёРµ Рё С†РµРЅР° С‚РѕРІР°СЂР° РѕР±СЏР·Р°С‚РµР»СЊРЅС‹");
                 }
-
-                // 3. Логика сохранения (пример с HttpClient)
                 _client.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+                  new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
 
                 var response = await _client.PostAsJsonAsync(
-                    $"{GlobalVariables.GETWAY_OCELOT}/products",
-                    new
-                    {
-                        product.Name,
-                        product.Price,
-                        product.Description,
-                        ShopId = product.ShopId
-                    });
+                    $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.POST_ADD_PRODUCT}",
+                    product,
+                    options);
 
                 if (!response.IsSuccessStatusCode)
                 {
                     return BadRequest(await response.Content.ReadAsStringAsync());
                 }
 
-                // 4. Возвращаем успешный результат
+                // 5. Р’РѕР·РІСЂР°С‰Р°РµРј СѓСЃРїРµС€РЅС‹Р№ СЂРµР·СѓР»СЊС‚Р°С‚
                 return new JsonResult(new { success = true });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Ошибка при сохранении товара: {ex.Message}");
+                return StatusCode(500, $"РћС€РёР±РєР° РїСЂРё СЃРѕС…СЂР°РЅРµРЅРёРё С‚РѕРІР°СЂР°: {ex.Message}");
             }
         }
         #endregion
 
 
-        #region менеджеры
+        #region РјРµРЅРµРґР¶РµСЂС‹
         /// <summary>
-        /// загрузка менеджеров магазина
+        /// Р·Р°РіСЂСѓР·РєР° РјРµРЅРµРґР¶РµСЂРѕРІ РјР°РіР°Р·РёРЅР°
         /// </summary>
         /// <param name="shopId"></param>
         /// <returns></returns>
         public async Task<JsonResult> OnGetManagers(int shopId)
         {
-            // Получаем менеджеров магазина из БД
-            // var managers = await _shopService.GetShopManagersAsync(shopId);
-
-            var managers = new[]
+            var options = new JsonSerializerOptions
             {
-                new { Id = 1, Name = "Иван Иванов", Email = "ivan@example.com" },
-                new { Id = 2, Name = "Петр Петров", Email = "petr@example.com" }
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = true
             };
-
-            return new JsonResult(managers);
+            // РџРѕР»СѓС‡Р°РµРј РјРµРЅРµРґР¶РµСЂРѕРІ РјР°РіР°Р·РёРЅР° РёР· Р‘Р”
+            // var managers = await _shopService.GetShopManagersAsync(shopId);
+              _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+             
+            var responseUser = await _client.GetAsync(
+                  $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.GET_MANAGER_SHOP}{shopId}");
+            if (!responseUser.IsSuccessStatusCode)
+            {
+                return new JsonResult("");
+            }
+            var responseBody = await responseUser.Content.ReadAsStringAsync();
+            var items = JsonSerializer.Deserialize <List<GetManagersShopsDto>>(responseBody, options);
+            
+            var result = items.Select(item => new
+            {
+                Id = item.Id,
+                Name = item.UserName,
+                Email = item.RoleUser
+            })
+                   .ToList();
+            return new JsonResult(result);
         }
 
         /// <summary>
-        /// Удаление менеджера
+        /// РЈРґР°Р»РµРЅРёРµ РјРµРЅРµРґР¶РµСЂР°
         /// </summary>
         /// <param name="managerId"></param>
         /// <param name="shopId"></param>
         /// <returns></returns>
-        public async Task<IActionResult> OnPostRemoveManagerAsync(int managerId, int shopId)
+        public async Task<IActionResult> OnPostRemoveManagerAsync([FromBody] DeleteManagersShopsDto deleteDto)
         {
             try
             {
-                // Удаляем менеджера из магазина
-                // await _shopService.RemoveManagerAsync(shopId, managerId);
-                return new OkResult();
+                
+                _client.DefaultRequestHeaders.Authorization =
+          new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+
+
+                var request = new HttpRequestMessage(HttpMethod.Delete,
+            $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.DELETE_MANAGER_SHOP}")
+                {
+                    Content = new StringContent(
+                JsonSerializer.Serialize(deleteDto),
+                Encoding.UTF8,
+                "application/json")
+                };
+
+                var response = await _client.SendAsync(request);
+
+                // РћС‚РїСЂР°РІР»СЏРµРј DELETE Р·Р°РїСЂРѕСЃ СЃ С‚РµР»РѕРј
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return new OkResult();
+                }
+                return BadRequest();
             }
             catch (Exception ex)
             {
@@ -318,74 +424,96 @@ namespace WebApplication1.Pages
         }
 
         /// <summary>
-        /// Добавления нового менеджера
+        /// Р”РѕР±Р°РІР»РµРЅРёСЏ РЅРѕРІРѕРіРѕ РјРµРЅРµРґР¶РµСЂР°
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<IActionResult> OnPostAddManagerAsync([FromBody] AddManagerRequest request)
+        [HttpPost]
+        [ValidateAntiForgeryToken] // РђС‚СЂРёР±СѓС‚ РЅР° СЃРµСЂРІРµСЂРЅРѕР№ СЃС‚РѕСЂРѕРЅРµ РґР»СЏ РїСЂРѕРІРµСЂРєРё С‚РѕРєРµРЅР°
+        public async Task<IActionResult> OnPostAddManagerAsync([FromBody] AddManagersShopsDto request)
         {
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = true
+            };
             try
             {
-                // Добавляем менеджера в магазин
-                // await _shopService.AddManagerAsync(request.ShopId, request.Email);
-                return new OkResult();
+                // 1. РџСЂРѕРІРµСЂРєР° Р°СѓС‚РµРЅС‚РёС„РёРєР°С†РёРё
+                if (!User.Identity.IsAuthenticated)
+                {
+                    return BadRequest(new { message = "РўСЂРµР±СѓРµС‚СЃСЏ Р°РІС‚РѕСЂРёР·Р°С†РёСЏ" });
+                }
+
+                // 2. Р‘Р°Р·РѕРІР°СЏ РІР°Р»РёРґР°С†РёСЏ
+                if (string.IsNullOrWhiteSpace(request.UserName))
+                {
+                    return BadRequest(new { message = "РРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ" });
+                }
+
+                if (request.UserId <= 0)
+                {
+                    return BadRequest(new { message = "РќРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ ID РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ" });
+                }
+
+                // 3. РџСЂРѕРІРµСЂРєР° СЃСѓС‰РµСЃС‚РІРѕРІР°РЅРёСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
+                var responseUser = await _client.GetAsync(
+                    $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.GET_USER_ID}{request.UserId}");
+
+                if (!responseUser.IsSuccessStatusCode)
+                {
+                    return BadRequest(new { message = "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ СЃ СѓРєР°Р·Р°РЅРЅС‹Рј ID РЅРµ РЅР°Р№РґРµРЅ" });
+                }
+
+                // 4. РџСЂРѕРІРµСЂРєР° СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РґР°РЅРЅС‹С…
+                var responseBody = await responseUser.Content.ReadAsStringAsync();
+                var item = JsonSerializer.Deserialize<UserEasyDto>(responseBody, options);
+
+                if (item.Id != request.UserId || item.Login != request.UserName)
+                {
+                    return BadRequest(new { message = "ID РёР»Рё Р»РѕРіРёРЅ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РЅРµ СЃРѕРІРїР°РґР°СЋС‚. РџРѕР»СЊР·РѕРІР°С‚РµР»СЏ РЅРµ РЅР°Р№РґРµРЅРѕ!" });
+                }
+
+                // 5. Р”РѕР±Р°РІР»РµРЅРёРµ РјРµРЅРµРґР¶РµСЂР°
+                _client.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+
+                //var response = await _client.PostAsJsonAsync(
+                //    $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.POST_ADD_MANAGER_SHOP}",
+                //    request);
+
+                //if (!response.IsSuccessStatusCode)
+                //{
+                //    var errorContent = await response.Content.ReadAsStringAsync();
+                //    return BadRequest(new { message = $"РћС€РёР±РєР° РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё: {errorContent}" });
+                //}
+
+                AddManagersShopsDto addManagersShopsDto = new();
+                addManagersShopsDto.NameShop = request.NameShop;
+                addManagersShopsDto.ShopId = request.ShopId;
+                addManagersShopsDto.UserId = request.UserId;
+                addManagersShopsDto.RoleUser = request.RoleUser;
+                addManagersShopsDto.UserName = request.UserName;
+                var response = await _client.PostAsJsonAsync($"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.POST_ADD_MANAGER_SHOP}", addManagersShopsDto);
+
+
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // return RedirectToPage("/UserPages");
+                    return new JsonResult(new { success = true });
+                }
+
+                return new JsonResult(new { success = true });
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new { message = $"РџСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР°: {ex.Message}" });
             }
         }
-        
         #endregion
     }
 
 
-    public class AddManagerRequest
-    {
-        public int ShopId { get; set; }
-        public string Email { get; set; }
-    }
-    public class ShopUpdateRequest
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public string Address { get; set; }
-        public string ContactInfo { get; set; }
-    }
 
-
-    public class Products 
-    {
-        int Id { get; set; }
-
-        string Name { get; set; }
-
-        double Price { get; set; }
-    }
-
-    public class ProductCreateRequest
-    {
-        public string Name { get; set; }
-        public decimal Price { get; set; }
-        public string Description { get; set; }
-        public int ShopId { get; set; }
-    }
-
-    public class ProductUpdateRequest
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public decimal Price { get; set; }
-        public string Description { get; set; }
-    }
-
-    public class ProductSave
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public decimal Price { get; set; }
-        public string Description { get; set; }
-        public int ShopId { get; set; }
-    }
 }

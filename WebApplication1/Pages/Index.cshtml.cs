@@ -2,20 +2,38 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Model.Product;
 using Model.Cluster;
+using AuthService.Dto;
+using GlobalVariablesRP;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using Microsoft.Extensions.Configuration;
+using WebApplication1.Model;
+using ClusterService;
+using System.Collections.Generic;
+using WebApplication1.Model.Product.ProductDto;
+using System.Text.RegularExpressions;
 
 namespace WebApplication1.Pages
 {
     public class IndexModel : PageModel
     {
+        private readonly HttpClient _client;
+     
         public string Message { get; }
 
         private readonly ILogger<IndexModel> _logger;
 
-        public IndexModel(ILogger<IndexModel> logger)
+
+        public IndexModel(IConfiguration configuration, IHttpClientFactory clientFactory, ILogger<IndexModel> logger)
         {
+           
+            _client = clientFactory.CreateClient();
+            _client.BaseAddress = new Uri(GlobalVariables.GETWAY_OCELOT);
             _logger = logger;
             Message = "Время:";
         }
+
+     
 
         public string PrintTime() => DateTime.Now.ToLongTimeString();
 
@@ -39,44 +57,112 @@ namespace WebApplication1.Pages
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        public JsonResult OnGetSearch(string query)
+        public async Task<JsonResult> OnGetSearch(string query)
         {
-            // Здесь логика поиска товаров
-            // Пример:
-            var searchResults = new List<Product>
-            {
-                new Product { Id = 1, Name = query + " 1", Description = "Описание " + query + " 1", Price = 100 },
-                new Product { Id = 2, Name = query + " 2", Description = "Описание " + query + " 2", Price = 200 },
-                new Product { Id = 3, Name = query + " 3", Description = "Описание " + query + " 3", Price = 300 }
-            };
 
-            return new JsonResult(searchResults);
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true // если в JSON camelCase (например, "id" вместо "Id")
+            };
+            List<ProductDto> products1 = new List<ProductDto>();
+
+            
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+
+            var response = await _client.GetAsync(
+                $"{GlobalVariables.GETWAY_OCELOT}" +
+                $"{GlobalVariables.GET_SEARCH_KEYWORD_CLUSTER}{query}"); 
+
+            if (response.IsSuccessStatusCode)
+            {
+                try
+                {
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    // Декодируем Unicode-последовательности
+                    string decodedJson = System.Text.RegularExpressions.Regex.Unescape(responseBody);
+                    string decodedString = System.Text.RegularExpressions.Regex.Unescape(decodedJson);
+                    // 2 раза с первого не хочет!
+
+                    string cleanJson = Regex.Unescape(decodedString.Trim('"'));
+                    List<ClusterDto> items = JsonSerializer.Deserialize<List<ClusterDto>>(cleanJson, options);
+
+                    /// работа с продуктами
+
+                    var options1 = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping // Важно!
+                    };
+                    foreach(var item in items)
+                    {
+                        var responseProducts = await _client.GetAsync(
+                      $"{GlobalVariables.GETWAY_OCELOT}" +
+                      $"{GlobalVariables.GET_PRODUCTS_BY_CLUSTER}{item.Id}");
+                        if (responseProducts.IsSuccessStatusCode)
+                        {
+                            string responseBodyProduct = await responseProducts.Content.ReadAsStringAsync();
+                             responseBody = System.Web.HttpUtility.HtmlDecode(responseBodyProduct);
+                            //проблема с сиволами поэтому вот код выше который преобразует это чудо в человеческий язык
+                            // Далее десериализация JSON 
+                            var itemsProducts = JsonSerializer.Deserialize<List<ProductDto>>(responseBody, options);
+
+
+                            products1.AddRange(itemsProducts);
+
+                        }
+                    }
+                    // Далее десериализация JSON 
+                    var distinctItems = products1.GroupBy(x => x.ProductId).Select(y => y.First());
+                    var result = distinctItems.Select(item => new Product
+                    {
+                        Id = item.ProductId,
+                        Name = item.NameProduct,
+                        Description = item.Description,
+                        Price = item.Price
+
+                    })
+                     .ToList();
+                    return new JsonResult(result);
+                }
+                catch (Exception ex) 
+                {
+                
+                }
+                return new JsonResult("");
+            }
+            return new JsonResult("");
         }
 
         /// <summary>
         /// Запрос к категориям товара для меню
         /// </summary>
         /// <returns></returns>
-        public JsonResult OnGetCategories()
+        public async Task<JsonResult> OnGetCategories()
         {
-            var categories = new List<Category>
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+
+            var response = await _client.GetAsync(
+                $"{GlobalVariables.GETWAY_OCELOT}" +
+                $"{GlobalVariables.GET_CLUSTER}"); //Объект не нужен, так как передаём jwt токен
+            if (response.IsSuccessStatusCode)
             {
-                new Category { Id = 1, Name = "Продукты", ParentId = -1 },
-                new Category { Id = 2, Name = "Мясо", ParentId = 1 },
-                new Category { Id = 3, Name = "Овощи", ParentId = 1 },
-                new Category { Id = 4, Name = "Электроника", ParentId = -1 },
-                new Category { Id = 5, Name = "Ноутбуки", ParentId = 4 },
-                new Category { Id = 6, Name = "Телефоны", ParentId = 4 },
-                new Category { Id = 10, Name = "Apple", ParentId = 6 },
-                new Category { Id = 11, Name = "Sumsung", ParentId = 6 },
-                new Category { Id = 12, Name = "Honor", ParentId = 6 },
+                string responseBody = await response.Content.ReadAsStringAsync();
 
-                new Category { Id = 7, Name = "Молочные продукты", ParentId = 1 },
-                new Category { Id = 9, Name = "Без категории", ParentId = -1 },
-            };
 
-            return new JsonResult(categories);
+                // Далее десериализация JSON 
+                var items = JsonSerializer.Deserialize<List<ClusterDto>>(responseBody);
 
+                var result = items.Select(item => new 
+                {
+                    Id = item.Id,
+                    Name = item.Name,
+                    ParentId = item.ParentId,
+                 
+                })
+                 .ToList();
+                return new JsonResult(result);
+            }
+            return new JsonResult("");
         }
 
        
@@ -85,34 +171,80 @@ namespace WebApplication1.Pages
         /// </summary>
         /// <param name="categoryId">id кластера</param>
         /// <returns></returns>
-        public JsonResult OnGetProductsByCategory(int categoryId)
+        public async Task<JsonResult> OnGetProductsByCategory(int categoryId)
         {
-            var products = new List<Product>();
-            if (categoryId == 2) // Мясо
+            List<ProductDto> products1 = new List<ProductDto>();
+
+            var options = new JsonSerializerOptions
             {
-                products.AddRange(new List<Product>
-                {
-                    new Product { Id = 101, Name = "Говядина", Description = "Свежая говядина", Price = 500 },
-                    new Product { Id = 102, Name = "Свинина", Description = "Свежая свинина", Price = 450 }
-                });
-            }
-            else if (categoryId == 3) // Овощи
+                PropertyNameCaseInsensitive = true,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping // Важно!
+            };
+            var responseProducts = await _client.GetAsync(
+               $"{GlobalVariables.GETWAY_OCELOT}" +
+               $"{GlobalVariables.GET_PRODUCTS_BY_CLUSTER}{categoryId}");
+            if (responseProducts.IsSuccessStatusCode)
             {
-                products.AddRange(new List<Product>
-                {
-                    new Product { Id = 201, Name = "Морковь", Description = "Свежая морковь", Price = 50 },
-                    new Product { Id = 202, Name = "Картофель", Description = "Свежий картофель", Price = 40 }
-                });
+                string responseBodyProduct = await responseProducts.Content.ReadAsStringAsync();
+                var  responseBody = System.Web.HttpUtility.HtmlDecode(responseBodyProduct);
+                //проблема с сиволами поэтому вот код выше который преобразует это чудо в человеческий язык
+                // Далее десериализация JSON 
+                var itemsProducts = JsonSerializer.Deserialize<List<ProductDto>>(responseBody, options);
+
+
+                products1.AddRange(itemsProducts);
+
             }
-            else if (categoryId == 9) // Без категории
+
+
+
+            var response = await _client.GetAsync(
+                $"{GlobalVariables.GETWAY_OCELOT}" +
+                $"{GlobalVariables.GET_SERCH_CHILDREN_CLUSTER}{categoryId}");
+          
+            if (response.IsSuccessStatusCode)
             {
-                products.AddRange(new List<Product>
+                string responseBody = await response.Content.ReadAsStringAsync();
+                // Далее десериализация JSON 
+                var items = JsonSerializer.Deserialize<List<ClusterDto>>(responseBody);
+
+               
+
+               
+
+                foreach (var item in items) 
                 {
-                    new Product { Id = 301, Name = "Товар без категории 1", Description = "Описание", Price = 100 },
-                    new Product { Id = 302, Name = "Товар без категории 2", Description = "Описание", Price = 200 }
-                });
+                     responseProducts = await _client.GetAsync(
+                  $"{GlobalVariables.GETWAY_OCELOT}" +
+                  $"{GlobalVariables.GET_PRODUCTS_BY_CLUSTER}{item.Id}");
+                    
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string responseBodyProduct = await responseProducts.Content.ReadAsStringAsync();
+                        responseBody = System.Web.HttpUtility.HtmlDecode(responseBodyProduct);
+                        //проблема с сиволами поэтому вот код выше который преобразует это чудо в человеческий язык
+                        // Далее десериализация JSON 
+                        var itemsProducts = JsonSerializer.Deserialize<List<ProductDto>>(responseBody, options);
+                       
+                       
+                        products1.AddRange(itemsProducts);
+
+                    }
+                }
+        
             }
-            return new JsonResult(products);
+            var distinctItems = products1.GroupBy(x => x.ProductId).Select(y => y.First());
+            var result = distinctItems.Select(item => new Product
+            {
+                Id = item.ProductId,
+                Name = item.NameProduct,
+                Description = item.Description,
+                Price = item.Price
+
+            })
+             .ToList();
+            return new JsonResult(result);
+           
         }
 
 

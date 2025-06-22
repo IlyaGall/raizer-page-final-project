@@ -1,13 +1,7 @@
-﻿using System.Text.Json.Serialization;
-
-namespace WebApplication1.Model.Product.ProductDto
+﻿namespace ProductService.BLL
 {
-    public class ProductDto
+    public class AddProductDto
     {
-        /// <summary>
-        /// ClusterId продукта
-        /// </summary>
-        public int ProductId { get; set; }
         /// <summary>
         /// ClusterId магазина
         /// </summary>
@@ -19,11 +13,11 @@ namespace WebApplication1.Model.Product.ProductDto
         /// <summary>
         /// Название продукта
         /// </summary>
-        public string NameProduct { get; set; }
+        public string NameProduct { get; set; } = "";
         /// <summary>
         /// Описание продукта
         /// </summary>
-        public string Description { get; set; }
+        public string Description { get; set; } = "";
         /// <summary>
         /// Цена товара
         /// </summary>
@@ -31,11 +25,10 @@ namespace WebApplication1.Model.Product.ProductDto
         /// <summary>
         /// Штрихкод
         /// </summary>
-        public long Barcode { get; set; }
+        public long Barcode { get; set; } =1234;
         /// <summary>
         /// Номер модели
         /// </summary>
-        public string ModelNumber { get; set; }
-
+        public string ModelNumber { get; set; } = "";
     }
 }
