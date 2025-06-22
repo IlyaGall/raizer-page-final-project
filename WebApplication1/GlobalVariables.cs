@@ -7,20 +7,65 @@
         /// </summary>
         public const string GETWAY_OCELOT = "https://localhost:5011";
 
+        #region clusterSerch/cluster
 
-        #region запросы для продуктов
+        /// <summary>
+        /// Получить класстеры(все)
+        /// </summary>
+        public const string GET_CLUSTER = "/gateway/Cluster/GetAllElements";
+
+        /// <summary>
+        /// Для поиска кластера по ключевому слову
+        /// </summary>
+       // public const string GET_SEARCH_CLUSTER = "/gateway/Cluster/SearchProducts?keyWord=";
+        public const string GET_SEARCH_KEYWORD_CLUSTER = "/gateway/Cluster/SerchClusterKeyWord?keyWord=";
+
+
+        /// <summary>
+        /// Для получения дочерних кластеров
+        /// </summary>
+        public const string GET_SERCH_CHILDREN_CLUSTER = "/gateway/Cluster/GetChildrenCluster?id=";
+
+
+
+        #endregion
+
+
+        #region product
+        /// <summary>
+        /// Получение списка товаров по кластеру
+        /// </summary>
+        public const string GET_PRODUCTS_BY_CLUSTER = "/gateway/Product/GetProductsByCluster?ClusterId=";
+
+      
+
         /// <summary>
         /// Получение товара по id нужно для получение конкретного экземпляра 
         /// </summary>
         public const string GET_PRODUCT_ID = "/gateway/Product/GetProductsById?id=";
         // https://localhost:5011/gateway/Product/GetProductsById?id=1 - полный запрос
 
+        /// <summary>
+        /// Добавить продукт
+        /// </summary>
+        public const string POST_ADD_PRODUCT = "/gateway/Product/add";
+        // https://localhost:5011/gateway/Product/GetProductsById?id=1 - полный запрос
 
+        /// <summary>
+        /// Удалить продукт
+        /// </summary>
+        public const string DELETE_PRODUCT = "/gateway/Product/Delete";
+
+
+        /// <summary>
+        /// Обновить продукт
+        /// </summary>
+        public const string UPDATE_PRODUCT = "/gateway/Product/Update";
 
         #endregion
 
         #region авторизация
-        
+
         /// <summary>
         /// Авторизация пользователя на сайте
         /// </summary>
@@ -30,27 +75,46 @@
         /// <summary>
         /// Получить информацию о пользователе
         /// </summary>
-        public const string GET_INFO_USER = "gateway/auth/GetUserId";
+        public const string GET_INFO_USER = "/gateway/auth/GetUserId";
 
         /// <summary>
         /// Обновить информацию о пользователе
         /// </summary>
         public const string POST_UPDATE_INFO_USER = "gateway/auth/update";
 
+
+        public const string GET_USER_ID = "/gateway/auth/GetSerchUser?id=";
         #endregion
 
         #region Owner
 
         /// <summary>
-        /// Добавление менеджера магазина (нужно при создании магазина в первый раз)
+        /// Добавление владельца магазина
         /// </summary>
-        public const string POST_ADD_OWNER_SHOP = "/gateway/Owner/AddManagersShopsDto";
+        public const string POST_ADD_OWNER_SHOP = "/gateway/Owner/AddOwnerShops";
+
+
+        /// <summary>
+        /// Добавление менеджера магазина 
+        /// </summary>
+        public const string POST_ADD_MANAGER_SHOP = "/gateway/Owner/AddManegerShops";
+
 
         /// <summary>
         /// Упращённый список магазинов пользователя
         /// </summary>
         public const string POST_LIST_SHOP_USER = "/gateway/Owner/GetShop";
-       
+
+        /// <summary>
+        /// Получить список менеджеров
+        /// </summary>
+        public const string GET_MANAGER_SHOP = "/gateway/Owner/GetManager?idShop=";
+
+        /// <summary>
+        /// Удалить менеджера
+        /// </summary>
+
+        public static string DELETE_MANAGER_SHOP = "/gateway/Owner/DeleteManager";
 
         #endregion
 
@@ -65,7 +129,15 @@
         /// </summary>
         public const string GET_INFO_SHOP = "/gateway/Shop/GetInfo?id=";
 
+        /// <summary>
+        /// Обновление название магазина
+        /// </summary>
+        public const string PUT_SHOP_UPDATE = "/gateway/Shop/Update";
 
+        /// <summary>
+        /// Получить информацию о продутах магазина
+        /// </summary>
+        public const string GET_SHOP_PRODUCTS = "/gateway/Product/GetShopProducts?ShopId=";
         #endregion
     }
 }

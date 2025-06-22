@@ -3,6 +3,11 @@
     public class AddManagersShopsDto
     {
         /// <summary>
+        /// Никнейм пользователя
+        /// </summary>
+        public string UserName { get; set; } = string.Empty;
+
+        /// <summary>
         /// id пользователя магазина
         /// </summary>
         public int UserId { get; set; }

@@ -52,9 +52,10 @@
 				<p class="welcome-message">Добро пожаловать, <strong>@User.Identity.Name</strong>!</p>
 			</div>
 
+			
 			<div class="card user-info-card mt-4">
 				<div class="card-header">
-					<h3><i class="fas fa-user-tie"></i> Ваши данные</h3>
+					<h3><i class="fas fa-user-tie"></i> Личные данные</h3>
 				</div>
 				<div class="card-body" id="userData">
 					<div class="loading-spinner">
@@ -64,6 +65,8 @@
 					</div>
 				</div>
 			</div>
+
+
 			<div class="text-end mb-3">
 				<a asp-page="/EditProfile" class="btn btn-outline-primary">Редактировать профиль</a>
 			</div>
@@ -251,47 +254,120 @@
 			});
 		});
 
+						// Обновленная функция загрузки данных
 		function loadUserData() {
 			fetch('?handler=UserData')
-				.then(response => response.json())
-				.then(data => renderUserData(data))
+				.then(response => {
+					if (!response.ok) {
+						throw new Error(`HTTP error! status: ${response.status}`);
+					}
+					return response.json();
+				})
+				.then(data => {
+					// Проверяем, что данные соответствуют модели UserDto
+					if (!data || typeof data !== 'object') {
+						throw new Error('Invalid data format received');
+					}
+
+					// Обновляем аватар и приветствие
+					updateUserProfile(data);
+
+					// Отображаем данные
+					renderUserData(data);
+				})
 				.catch(error => {
-					console.error('Ошибка загрузки данных пользователя:', error);
-					document.getElementById('userData').innerHTML =
-						'<div class="alert alert-danger">Не удалось загрузить данные пользователя</div>';
+					console.error('Error loading user data:', error);
+					showError('userData', 'Не удалось загрузить данные пользователя', error);
 				});
 		}
 
-		function renderUserData(data) {
+		function updateUserProfile(userData) {
+			// Формируем имя для аватара
+			const nameParts = [userData.name, userData.surname].filter(Boolean);
+			const displayName = nameParts.length > 0 ? nameParts.join(' ') : userData.login;
+
+			// Обновляем аватар
+			const avatarImg = document.querySelector('.avatar');
+			if (avatarImg && displayName) {
+				avatarImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
+			}
+
+			// Обновляем приветствие
+			const welcomeElement = document.querySelector('.welcome-message strong');
+			if (welcomeElement) {
+				welcomeElement.textContent = displayName;
+			}
+
+			// Обновляем роль пользователя (если есть в данных)
+			const roleElement = document.getElementById('userRole');
+			if (roleElement && userData.role) {
+				roleElement.textContent = userData.role;
+			}
+		}
+
+		function showError(elementId, message, error) {
+			const container = document.getElementById(elementId);
+			if (container) {
+				container.innerHTML = `
+					<div class="alert alert-danger">
+						${message}
+						${error ? `<small>${error.message}</small>` : ''}
+						<button onclick="loadUserData()" class="btn btn-link p-0">Попробовать снова</button>
+					</div>
+				`;
+			}
+		}
+
+				function renderUserData(data) {
 			const container = document.getElementById('userData');
 			let html = `
 				<div class="user-data-row">
-					<div class="user-data-label">Полное имя:</div>
-					<div class="user-data-value">${data.fullName}</div>
+					<div class="user-data-label">ID пользователя:</div>
+					<div class="user-data-value">${data.id || 'Не указан'}</div>
 				</div>
 				<div class="user-data-row">
-					<div class="user-data-label">Email:</div>
-					<div class="user-data-value">${data.email}</div>
+					<div class="user-data-label">Логин:</div>
+					<div class="user-data-value">${data.login || 'Не указан'}</div>
+				</div>
+				<div class="user-data-row">
+					<div class="user-data-label">Имя:</div>
+					<div class="user-data-value">${data.name || 'Не указано'}</div>
+				</div>
+				<div class="user-data-row">
+					<div class="user-data-label">Фамилия:</div>
+					<div class="user-data-value">${data.surname || 'Не указана'}</div>
+				</div>
+				<div class="user-data-row">
+					<div class="user-data-label">Отчество:</div>
+					<div class="user-data-value">${data.patronymic || 'Не указано'}</div>
 				</div>
 				<div class="user-data-row">
 					<div class="user-data-label">Телефон:</div>
-					<div class="user-data-value">${data.phone}</div>
+					<div class="user-data-value">${formatPhoneNumber(data.numberPhone)}</div>
 				</div>
 				<div class="user-data-row">
-					<div class="user-data-label">Должность:</div>
-					<div class="user-data-value">${data.position}</div>
+					<div class="user-data-label">Email:</div>
+					<div class="user-data-value">${data.email || 'Не указан'}</div>
 				</div>
 				<div class="user-data-row">
-					<div class="user-data-label">Отдел:</div>
-					<div class="user-data-value">${data.department}</div>
-				</div>
-				<div class="user-data-row">
-					<div class="user-data-label">Дата приема:</div>
-					<div class="user-data-value">${data.hireDate}</div>
+					<div class="user-data-label">Telegram ID:</div>
+					<div class="user-data-value">${renderTelegramId(data.telegramID)}</div>
 				</div>
 			`;
 			container.innerHTML = html;
 		}
+
+		// Вспомогательные функции форматирования
+		function formatPhoneNumber(phone) {
+			if (!phone) return 'Не указан';
+			return phone.replace(/(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})/, '+$1 ($2) $3-$4-$5');
+		}
+
+		function renderTelegramId(id) {
+			if (!id) return 'Не указан';
+			return `<a href="https://t.me/${id}" target="_blank">${id}</a>`;
+		}
+
 
 		function loadFavorites() {
 			fetch('?handler=Favorites')
