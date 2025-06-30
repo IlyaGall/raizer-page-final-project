@@ -1,0 +1,358 @@
+﻿@page 
+@model WebApplication1.Pages.CartItemModel
+@{
+    ViewData["Title"] = "Корзина";
+}
+
+@Html.AntiForgeryToken()
+<div class="container">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5>Корзина</h5>
+                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addCartModal">
+                            <i class="fas fa-plus"></i> Оформить заказ
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="productsList">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования товара -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Редактировать товар</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProductForm">
+                    <div class="row">
+                        <div class="mb-3">
+                            <label for="editProductCount" class="form-label">Количество</label>
+                            <div class="input-group">
+                                <input type="number" step="1" class="form-control" id="editProductCount" required>
+                            </div>
+                        </div>                        
+                    </div>
+                    <input type="hidden" id="editId">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Отмена </button>
+                <button type="button" class="btn btn-primary" id="updateProductBtn"> Сохранить </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно подтверждения удаления товара -->
+<div class="modal fade" id="confirmRemoveProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Удаление товара</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить этот товар?</p>
+                <p id="productToRemoveInfo"></p>
+                <input type="hidden" id="productToRemoveId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" id="confirmRemoveProductBtn">Удалить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            loadProducts();
+
+            // Обработчики кнопок
+            document.getElementById('updateProductBtn').addEventListener('click', function () {
+                const idcart = document.getElementById('editId').value;
+                const count = document.getElementById('editProductCount').value;
+                console.log('4+');
+                console.log(idcart);
+                updateProduct(idcart, count);
+                
+                $('#editProductModal').modal('hide');
+            });
+
+            document.getElementById('confirmRemoveProductBtn').addEventListener('click', function () {
+                const idcart = document.getElementById('productToRemoveId').value;
+                console.log('3+');
+                console.log(idcart);
+                deleteProduct(idcart);
+
+                $('#confirmRemoveProductModal').modal('hide');
+            });
+        });
+
+        function loadProducts() {
+            fetch(`?handler=CartUser&userId=@Model.Cart.UserId`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => renderProducts(data))
+                .catch(error => {
+                    console.error('Error:', error);
+                    const container = document.getElementById('productsList');
+                    if (container) {
+                        container.innerHTML = 
+                            `<div class="alert alert-danger">
+                                Не удалось загрузить список товаров. <button onclick="loadProducts()" class="btn btn-link">Попробовать снова</button>
+                            </div>`;
+                    }
+                });
+        }
+
+        // Вспомогательная функция для показа сообщений
+        function showSuccessMessage(message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show';
+            alertDiv.setAttribute('role', 'alert');
+            alertDiv.innerHTML = `
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    `;
+
+            const container = document.querySelector('.container');
+            if (container) {
+                container.insertBefore(alertDiv, container.firstChild);
+            }
+        }
+
+        function addProduct() {
+            const productData = {
+                shopId: parseInt(document.getElementById('productShopId').value),
+                clusterId: parseInt(document.getElementById('productClusterId').value || 0),
+                nameProduct: document.getElementById('productName').value,
+                description: document.getElementById('productDescription').value,
+                price: parseFloat(document.getElementById('productPrice').value),
+                barcode: parseInt(document.getElementById('productBarcode').value || 0),
+                modelNumber: document.getElementById('productModelNumber').value
+            };
+
+            // Валидация
+            if (!productData.nameProduct || isNaN(productData.price) || productData.price <= 0) {
+                alert('Пожалуйста, укажите название товара и корректную цену');
+                return;
+            }
+
+            fetch('?handler=SaveProduct', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify(productData)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => { throw new Error(text) });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        $('#addProductModal').modal('hide');
+                        document.getElementById('addProductForm').reset();
+                        loadProducts();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Ошибка при добавлении товара: ' + error.message);
+                });
+        }
+
+        function openEditProductModal(product) {
+            // Видные поля
+            document.getElementById('editProductCount').value = product.count || 0;
+
+            // спрятые поля
+            document.getElementById('editId').value = product.id;
+
+            $('#editProductModal').modal('show');
+        }
+
+        function updateProduct() {
+            const productData = {
+                Id: parseInt(document.getElementById('editId').value),
+                Count: document.getElementById('editProductCount').value,
+            };
+            
+            // Валидация данных перед отправкой
+            if (isNaN(productData.Id) ||
+                isNaN(productData.Count)) {
+                alert('Пожалуйста, проверьте числовые поля (ID, количество)');
+                return;
+            }
+
+            fetch('?handler=UpdateProduct', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify(productData)
+            })
+                .then(response => {
+                    
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(err.message || 'Не удалось обновить товар');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(() => {
+                    $('#editProductModal').modal('hide');
+                    loadProducts();
+                })
+                .catch(error => {
+                    alert(`Ошибка при обновлении товара: ${error.message}`);
+                });
+        }
+
+        function renderProducts(products) {
+           
+            const container = document.getElementById('productsList');
+
+            if (!container) return;
+
+            if (!products || products.length === 0) {
+                container.innerHTML = `<div class="alert alert-info"> В корзине пока нет позиций </div>`;
+                return;
+            }
+           
+            let html = `
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Название</th>
+                                <th>Цена</th>
+                                <th>Описание</th>
+                                <th>Модель</th>
+                                <th>Количество</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+            products.forEach(product => {
+                html += `
+                    <tr>
+                        <td>${product.name || 'Не указано'}</td>
+                        <td>${product.price ? `${product.price} ₽` : 'Не указана'}</td>
+                        <td>${product.description || 'Не указано'}</td>
+                        <td>${product.modelNumber || 'Не указана'}</td>
+                        <td>${product.count || 'Не указано'}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary edit-product"
+                                    data-id="${product.id}"
+                                    data-count="${product.count || ''}"
+                                    title="Изменить количество">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-danger delete-product"
+                                        data-id="${product.id}"
+                                        data-name="${product.nameProduct}"
+                                        title="Удалить">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>`;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            </div>`;
+
+            container.innerHTML = html;
+            
+            // Обработчики для кнопок редактирования
+            document.querySelectorAll('.edit-product').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const product = {
+                        id: this.getAttribute('data-id'),
+                        count: this.getAttribute('data-count')
+                    };
+                    openEditProductModal(product);
+                });
+            });
+            
+            // Обработчики для кнопок удаления
+            document.querySelectorAll('.delete-product').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const id = this.getAttribute('data-id');
+                    const productName = this.getAttribute('data-name');
+
+                    document.getElementById('productToRemoveId').value = id;
+                    document.getElementById('productToRemoveInfo').textContent =
+                        `Товар: ${productName || 'Без названия'} (ID: ${id})`;
+
+                    $('#confirmRemoveProductModal').modal('show');
+                });
+            });
+        }
+
+        function deleteProduct(id) {
+            
+            const deleteDto = {
+                Id: parseInt(id)
+            };
+            console.log(id);
+            console.log(deleteDto);
+            fetch(`?handler=DeleteProduct`, {
+                method: 'POST', // Или 'DELETE' не поддерживается!!!!
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify(deleteDto) // Сериализуем объект в JSON
+            })
+            .then(response => {
+                if (response.ok) {
+                    loadProducts();
+                } else {
+                    alert('Не удалось удалить позицию');
+                }
+            })
+            .catch(error => {                    
+                alert('Произошла ошибка при удалении позиции');
+            });
+        }
+
+    </script>
+}
