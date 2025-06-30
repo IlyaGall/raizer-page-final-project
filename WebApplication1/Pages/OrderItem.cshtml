@@ -1,8 +1,9 @@
-﻿@page "{id}"
-@model WebApplication1.Pages.ShopManagementModel
+﻿@page
+@model WebApplication1.Pages.OrderItemModel
 @{
-    ViewData["Title"] = "Управление магазином";
+    ViewData["Title"] = "Избранные позиции пользователя";
 }
+
 @Html.AntiForgeryToken()
 <div class="container">
     @if (TempData["SuccessMessage"] != null)
@@ -366,7 +367,7 @@
                 });
         }
 
-        function addManager() {
+              function addManager() {
             const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
             if (!tokenElement) {
                 console.error('Anti-forgery token not found');

@@ -73,11 +73,48 @@ function renderCards(products) {
 
         const price = document.createElement('p');
         price.className = 'price';
-        price.textContent = `Цена: $${product.price || '0'}`;
+        price.textContent = `Цена: ${product.price || '0'} руб.`;
 
         const cartBtn = document.createElement('button');
         cartBtn.className = 'cart-btn';
-        cartBtn.textContent = 'Добавить в корзину';
+        //if (isAuthenticated())
+        {
+            cartBtn.innerHTML = '♡︎ Добавить в корзину';
+            cartBtn.dataset.productId = product.id;
+
+            cartBtn.addEventListener('click', async () => {
+                try {
+                    /*const token = localStorage.getItem('jwtToken');
+                    if (!token) {
+                        alert('Требуется авторизация');
+                        return;
+                    }*/
+
+                    const response = await fetch('https://localhost:7175/api/Cart/AddCartProduct?productId=' + product.id, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'/*,
+                            'Authorization': `Bearer ${token}`*/
+                        }
+                    });
+
+                    console.log(response);
+                    if (response.ok) {
+                        alert('Товар добавлен в корзину!');
+                        cartBtn.innerHTML = "❤";
+                    } else {
+                        alert('Ошибка при добавлении в корзину');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Произошла ошибка');
+                }
+            });
+        } /*else {
+            cartBtn.innerHTML = '🔒 Корзина';
+            cartBtn.disabled = true;
+            cartBtn.title = 'Требуется авторизация';
+        }*/
 
         const favoriteBtn = document.createElement('button');
         favoriteBtn.className = 'favorite-btn';
