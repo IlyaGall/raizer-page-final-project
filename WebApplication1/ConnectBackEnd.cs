@@ -1,7 +1,7 @@
-﻿using System.Text.Json;
-using System.Text;
+﻿using GlobalVariablesRP;
 using System.Net.Http.Headers;
-using GlobalVariablesRP;
+using System.Text;
+using System.Text.Json;
 
 namespace ConnectBackEnd
 {
@@ -29,7 +29,7 @@ namespace ConnectBackEnd
 
         public ConnectServer()
         {
-            _client = new HttpClient { BaseAddress = new Uri(GlobalVariables.GETWAY_OCELOT) };
+            _client = new HttpClient { BaseAddress = new Uri(GlobalVariables.GATEWAY) };
             _jsonOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
@@ -37,10 +37,15 @@ namespace ConnectBackEnd
             };
         }
 
-        public void Dispose() => _client?.Dispose();
+        public void Dispose()
+        {
+            _client?.Dispose();
+        }
 
-        private StringContent CreateJson<T>(T obj) =>
-            new StringContent(JsonSerializer.Serialize(obj, _jsonOptions), Encoding.UTF8, "application/json");
+        private StringContent CreateJson<T>(T obj)
+        {
+            return new StringContent(JsonSerializer.Serialize(obj, _jsonOptions), Encoding.UTF8, "application/json");
+        }
 
         private async Task<T> DeserializeResponse<T>(HttpResponseMessage response)
         {

@@ -3,7 +3,6 @@ using ManagersShopsService.BLL.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Configuration;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Http.Headers;
 using System.Security.Claims;
@@ -78,7 +77,7 @@ namespace WebApplication1.Pages
 
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
-                var response = await client.PostAsJsonAsync($"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.POST_ADD_SHOP}", shop);
+                var response = await client.PostAsJsonAsync($"{GlobalVariables.GATEWAY}{GlobalVariables.POST_ADD_SHOP}", shop);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -86,20 +85,20 @@ namespace WebApplication1.Pages
                     addManagersShopsDto.NameShop = shop.Name;
 
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
-                    response = await client.PostAsJsonAsync($"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.POST_ADD_OWNER_SHOP}", addManagersShopsDto);
+                    response = await client.PostAsJsonAsync($"{GlobalVariables.GATEWAY}{GlobalVariables.POST_ADD_OWNER_SHOP}", addManagersShopsDto);
 
                     if (response.IsSuccessStatusCode)
                     {
-                       // return RedirectToPage("/UserPages");
+                        // return RedirectToPage("/UserPages");
                         return RedirectToPage("/ShopManagement", new { id = addManagersShopsDto.ShopId });
                     }
                 }
-                else 
+                else
                 {
                     TempData["SuccessMessage"] = await response.Content.ReadAsStringAsync();
                 }
                 return null;
-                    
+
             }
             catch (Exception ex)
             {
@@ -107,6 +106,6 @@ namespace WebApplication1.Pages
                 return Page();
             }
         }
-       
+
     }
 }

@@ -299,12 +299,30 @@
 
 			container.innerHTML = comments.map(comment => `
 				<div class="comment">
-					<div class="comment-author">${comment.authorName}</div>
-					<div class="comment-date">${new Date(comment.createdDate).toLocaleString()}</div>
+					<div class="comment-author">${comment.userName}</div>
+					<div class="comment-date">${new Date(comment.dateCreated).toLocaleString()}</div>
+                    ${renderStars(comment.estimation)}
 					<div class="comment-text">${comment.text}</div>
 				</div>
 			`).join('');
 		}
+
+        function renderStars(rating) {
+            const maxStars = 5;
+            let stars = '';
+
+            // Закрашенные звёзды
+            for (let i = 1; i <= rating; i++) {
+                stars += '★';
+            }
+
+            // Пустые звёзды
+            for (let i = rating + 1; i <= maxStars; i++) {
+                stars += '☆';
+            }
+
+            return stars;
+        }
 
 		async function addComment(productId) {
 			const text = document.getElementById('commentText').value.trim();
@@ -331,3 +349,43 @@
 		}
 	</script>
 }
+
+<style>
+    .star-rating {
+        display: inline-flex;
+        direction: rtl; /* Справа налево для эффекта выделения */
+        margin-bottom: 10px;
+    }
+
+    .star-rating input {
+        display: none; /* Скрываем настоящие input */
+    }
+
+    .star-rating label {
+        color: #ddd; /* Цвет неактивных звёзд */
+        font-size: 24px;
+        cursor: pointer;
+        margin: 0 2px;
+    }
+
+    .star-rating input:checked ~ label,
+    .star-rating label:hover,
+    .star-rating label:hover ~ label {
+        color: #ffc107; /* Жёлтый цвет активных звёзд */
+    }
+
+    .static-stars {
+        color: #ffc107;
+        font-size: 18px;
+    }
+
+    .star {
+        color: #ddd;
+        font-size: 18px;
+        cursor: default;
+    }
+
+    .star.active {
+        color: #ffc107;
+    }
+</style>

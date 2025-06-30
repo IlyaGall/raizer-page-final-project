@@ -1,13 +1,13 @@
 ﻿namespace GlobalVariablesRP
 {
-    public class GlobalVariables
+    public static class GlobalVariables
     {
         /// <summary>
         /// Путь до ocelot
         /// </summary>
-        public const string GETWAY_OCELOT = "https://localhost:5011";
+        public const string GATEWAY = "https://localhost:5011";
 
-        #region clusterSerch/cluster
+        #region Clusters
 
         /// <summary>
         /// Получить класстеры(все)
@@ -37,7 +37,7 @@
         /// </summary>
         public const string GET_PRODUCTS_BY_CLUSTER = "/gateway/Product/GetProductsByCluster?ClusterId=";
 
-      
+
 
         /// <summary>
         /// Получение товара по id нужно для получение конкретного экземпляра 
@@ -61,6 +61,31 @@
         /// Обновить продукт
         /// </summary>
         public const string UPDATE_PRODUCT = "/gateway/Product/Update";
+
+        #endregion
+
+        #region Comment
+
+        /// <summary>
+        /// Get comment by id endpoint
+        /// </summary>
+        public const string GET_COMMENT = "/gateway/Comment/";
+        /// <summary>
+        /// Add comment endpoint
+        /// </summary>
+        public const string ADD_COMMENT = "/gateway/Comment/Add";
+        /// <summary>
+        /// Update comment endpoint
+        /// </summary>
+        public const string UPDATE_COMMENT = "/gateway/Comment/Update";
+        /// <summary>
+        /// Delete comment endpoint
+        /// </summary>
+        public const string DELETE_COMMENT = "/gateway/Comment/Delete";
+        /// <summary>
+        /// Get comment list by product id endpoint
+        /// </summary>
+        public const string GET_COMMENTS_BY_PRODUCT = "/gateway/Comment/GetCommentsProduct?IdProduct=";
 
         #endregion
 

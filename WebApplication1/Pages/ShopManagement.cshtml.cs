@@ -1,13 +1,9 @@
 ﻿using AuthService.BLL.Dto;
-using AuthService.Dto;
-using ConnectBackEnd;
 using GlobalVariablesRP;
 using ManagersShopsService.BLL.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Options;
-using Model.User;
 using ProductService.BLL;
 using ShopService.BLL;
 using ShopService.Domain;
@@ -27,7 +23,7 @@ namespace WebApplication1.Pages
         public ShopManagementModel(IHttpClientFactory clientFactory)
         {
             _client = clientFactory.CreateClient();
-            _client.BaseAddress = new Uri(GlobalVariables.GETWAY_OCELOT);
+            _client.BaseAddress = new Uri(GlobalVariables.GATEWAY);
         }
 
 
@@ -41,7 +37,7 @@ namespace WebApplication1.Pages
 
             // _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
             var response = await _client.GetAsync(
-                $"{GlobalVariables.GETWAY_OCELOT}" +
+                $"{GlobalVariables.GATEWAY}" +
                 $"{GlobalVariables.GET_INFO_SHOP}{Id}");
 
             if (response.IsSuccessStatusCode)
@@ -71,7 +67,7 @@ namespace WebApplication1.Pages
                 TempData["SuccessMessage"] += "Ошибка при обновлении данных по магазину";
 
             }
-            
+
         }
 
 
@@ -98,7 +94,7 @@ namespace WebApplication1.Pages
               new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
 
                 var response = await _client.PutAsJsonAsync(
-                    $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.PUT_SHOP_UPDATE}",
+                    $"{GlobalVariables.GATEWAY}{GlobalVariables.PUT_SHOP_UPDATE}",
                     request);
 
                 if (!response.IsSuccessStatusCode)
@@ -137,9 +133,9 @@ namespace WebApplication1.Pages
             try
             {
                 var response = await _client.GetAsync(
-                  $"{GlobalVariables.GETWAY_OCELOT}" +
+                  $"{GlobalVariables.GATEWAY}" +
                   $"{GlobalVariables.GET_SHOP_PRODUCTS}{shopId}");
-                string s = $"{GlobalVariables.GETWAY_OCELOT}" +
+                string s = $"{GlobalVariables.GATEWAY}" +
                   $"{GlobalVariables.GET_SHOP_PRODUCTS}{shopId}";
                 if (response.IsSuccessStatusCode)
                 {
@@ -178,7 +174,7 @@ namespace WebApplication1.Pages
 
                     return new JsonResult(result);
 
-                   
+
                 }
 
             }
@@ -212,7 +208,6 @@ namespace WebApplication1.Pages
                 return Page();
             }
 
-
             try
             {
                 // Удаляем товар
@@ -222,7 +217,7 @@ namespace WebApplication1.Pages
 
 
                 var request = new HttpRequestMessage(HttpMethod.Delete,
-            $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.DELETE_PRODUCT}")
+            $"{GlobalVariables.GATEWAY}{GlobalVariables.DELETE_PRODUCT}")
                 {
                     Content = new StringContent(
                 JsonSerializer.Serialize(deleteDto),
@@ -233,9 +228,6 @@ namespace WebApplication1.Pages
                 var response = await _client.SendAsync(request);
 
                 // Отправляем DELETE запрос с телом
-
-
-
                 if (response.IsSuccessStatusCode)
                 {
                     return new OkResult();
@@ -275,7 +267,7 @@ namespace WebApplication1.Pages
               new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
 
                 var response = await _client.PutAsJsonAsync(
-                    $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.UPDATE_PRODUCT}",
+                    $"{GlobalVariables.GATEWAY}{GlobalVariables.UPDATE_PRODUCT}",
                     request);
 
                 if (!response.IsSuccessStatusCode)
@@ -327,7 +319,7 @@ namespace WebApplication1.Pages
                   new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
 
                 var response = await _client.PostAsJsonAsync(
-                    $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.POST_ADD_PRODUCT}",
+                    $"{GlobalVariables.GATEWAY}{GlobalVariables.POST_ADD_PRODUCT}",
                     product,
                     options);
 
@@ -362,17 +354,17 @@ namespace WebApplication1.Pages
             };
             // Получаем менеджеров магазина из БД
             // var managers = await _shopService.GetShopManagersAsync(shopId);
-              _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
-             
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+
             var responseUser = await _client.GetAsync(
-                  $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.GET_MANAGER_SHOP}{shopId}");
+                  $"{GlobalVariables.GATEWAY}{GlobalVariables.GET_MANAGER_SHOP}{shopId}");
             if (!responseUser.IsSuccessStatusCode)
             {
                 return new JsonResult("");
             }
             var responseBody = await responseUser.Content.ReadAsStringAsync();
-            var items = JsonSerializer.Deserialize <List<GetManagersShopsDto>>(responseBody, options);
-            
+            var items = JsonSerializer.Deserialize<List<GetManagersShopsDto>>(responseBody, options);
+
             var result = items.Select(item => new
             {
                 Id = item.Id,
@@ -393,13 +385,13 @@ namespace WebApplication1.Pages
         {
             try
             {
-                
+
                 _client.DefaultRequestHeaders.Authorization =
           new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
 
 
                 var request = new HttpRequestMessage(HttpMethod.Delete,
-            $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.DELETE_MANAGER_SHOP}")
+            $"{GlobalVariables.GATEWAY}{GlobalVariables.DELETE_MANAGER_SHOP}")
                 {
                     Content = new StringContent(
                 JsonSerializer.Serialize(deleteDto),
@@ -458,7 +450,7 @@ namespace WebApplication1.Pages
 
                 // 3. Проверка существования пользователя
                 var responseUser = await _client.GetAsync(
-                    $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.GET_USER_ID}{request.UserId}");
+                    $"{GlobalVariables.GATEWAY}{GlobalVariables.GET_USER_ID}{request.UserId}");
 
                 if (!responseUser.IsSuccessStatusCode)
                 {
@@ -494,7 +486,7 @@ namespace WebApplication1.Pages
                 addManagersShopsDto.UserId = request.UserId;
                 addManagersShopsDto.RoleUser = request.RoleUser;
                 addManagersShopsDto.UserName = request.UserName;
-                var response = await _client.PostAsJsonAsync($"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.POST_ADD_MANAGER_SHOP}", addManagersShopsDto);
+                var response = await _client.PostAsJsonAsync($"{GlobalVariables.GATEWAY}{GlobalVariables.POST_ADD_MANAGER_SHOP}", addManagersShopsDto);
 
 
 

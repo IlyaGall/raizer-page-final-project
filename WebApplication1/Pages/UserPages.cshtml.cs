@@ -1,14 +1,12 @@
-﻿using ConnectBackEnd;
+﻿using AuthService.Dto;
 using GlobalVariablesRP;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using AuthService.Dto;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text.Json;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WebApplication1.Pages
 {
@@ -22,7 +20,7 @@ namespace WebApplication1.Pages
         {
             _configuration = configuration;
             _client = clientFactory.CreateClient();
-            _client.BaseAddress = new Uri(GlobalVariables.GETWAY_OCELOT);
+            _client.BaseAddress = new Uri(GlobalVariables.GATEWAY);
         }
 
         /// <summary>
@@ -106,7 +104,7 @@ namespace WebApplication1.Pages
             try
             {
                 _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
-                var response = await _client.PostAsJsonAsync($"{GlobalVariables.GETWAY_OCELOT}/auth/update", UpdateData);
+                var response = await _client.PostAsJsonAsync($"{GlobalVariables.GATEWAY}/auth/update", UpdateData);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -140,7 +138,7 @@ namespace WebApplication1.Pages
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
 
             var response = await _client.GetAsync(
-                $"{GlobalVariables.GETWAY_OCELOT}" +
+                $"{GlobalVariables.GATEWAY}" +
                 $"{GlobalVariables.GET_INFO_USER}"); //Объект не нужен, так как передаём jwt токен
 
             if (response.IsSuccessStatusCode)
@@ -203,11 +201,11 @@ namespace WebApplication1.Pages
             try
             {
 
-               // using var client = new HttpClient();
+                // using var client = new HttpClient();
                 _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
-                
+
                 var response = await _client.GetAsync(
-                    $"{GlobalVariables.GETWAY_OCELOT}" +
+                    $"{GlobalVariables.GATEWAY}" +
                     $"{GlobalVariables.POST_LIST_SHOP_USER}"); //Объект не нужен, так как передаём jwt токен
 
 
@@ -237,15 +235,15 @@ namespace WebApplication1.Pages
                     })
                      .ToList();
 
-                        
-                  return new JsonResult(result);
-                   
+
+                    return new JsonResult(result);
+
                 }
                 return new JsonResult(null);
             }
             catch (Exception ex)
             {
-                TempData["SuccessMessage"] = ex.Message ;
+                TempData["SuccessMessage"] = ex.Message;
                 return new JsonResult(new { error = ex.Message });
             }
         }
