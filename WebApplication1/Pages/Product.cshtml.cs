@@ -1,3 +1,5 @@
+using AuthService.BLL.Dto;
+using CartService.BLL;
 using CommentService.BLL;
 using ConnectBackEnd;
 using GlobalVariablesRP;
@@ -9,28 +11,12 @@ using System.Text;
 using System.Text.Json;
 using WebApplication1.Model.Comment;
 using WebApplication1.Model.Product.ProductDto;
-using System.Xml.Linq;
-using GlobalVariablesRP;
-using AuthService.BLL.Dto;
-using ManagersShopsService.BLL.Dto;
-using System.Net.Http.Headers;
-using System.Text.Json;
-using CartService.BLL;
-using ShopService.Domain;
 
 namespace WebApplication1.Pages
 {
     // https://localhost:7100/Product?name=ds
     public class ProductModel : PageModel
     {
-        private readonly HttpClient _client;
-
-        public ProductModel(IHttpClientFactory clientFactory)
-        {
-            _client = clientFactory.CreateClient();
-            _client.BaseAddress = new Uri(GlobalVariables.GETWAY_OCELOT);
-        }
-
         public string Message { get; private set; } = "";
         private string IdProduct { get; set; } = string.Empty;
         public CartDto Cart { get; set; }
@@ -42,6 +28,7 @@ namespace WebApplication1.Pages
         private readonly HttpClient _client;
         private readonly string _jwtCookieName = "JWTToken";
         private readonly string _authHeaderValue = "Bearer";
+
         /// <summary>
         /// Конструктор страницы
         /// </summary>
@@ -94,6 +81,80 @@ namespace WebApplication1.Pages
             var productInfo = await LoadInfoProduct(id);
 
             return new JsonResult(productInfo);
+        }
+
+        /// <summary>
+        /// Добавления продукта в корзину
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken] // Атрибут на серверной стороне для проверки токена
+        public async Task<IActionResult> OnPostAddCartProduct([FromBody] AddCartDto request)
+        {
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = true
+            };
+            try
+            {
+                // 1. Проверка аутентификации
+                if (!User.Identity.IsAuthenticated)
+                {
+                    return BadRequest(new { message = "Требуется авторизация" });
+                }
+
+                // 2. Базовая валидация
+                //if (string.IsNullOrWhiteSpace(request.UserName))
+                {
+                    //return BadRequest(new { message = "Имя пользователя обязательно" });
+                }
+
+                if (request.UserId <= 0)
+                {
+                    return BadRequest(new { message = "Некорректный ID пользователя" });
+                }
+
+                // 3. Проверка существования пользователя
+                var responseUser = await _client.GetAsync(
+                    $"{GlobalVariables.GATEWAY}{GlobalVariables.GET_USER_ID}{request.UserId}");
+
+                if (!responseUser.IsSuccessStatusCode)
+                {
+                    return BadRequest(new { message = "Пользователь с указанным ID не найден" });
+                }
+
+                // 4. Проверка соответствия данных
+                var responseBody = await responseUser.Content.ReadAsStringAsync();
+                var item = JsonSerializer.Deserialize<UserEasyDto>(responseBody, options);
+
+                //if (item.Id != request.UserId || item.Login != request.UserName)
+                {
+                    //return BadRequest(new { message = "ID или логин пользователя не совпадают. Пользователя не найдено!" });
+                }
+
+                // 5. Добавление менеджера
+                _client.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+
+                AddCartDto addCartDto = new();
+                addCartDto.ProductId = request.ProductId;
+                addCartDto.Count = request.Count;
+                addCartDto.Discount = request.Discount;
+                addCartDto.UserId = request.UserId;
+                addCartDto.Price = request.Price;
+                var response = await _client.PostAsJsonAsync($"{GlobalVariables.GATEWAY}{GlobalVariables.POST_ADD_CART}", addCartDto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return new JsonResult(new { success = true });
+                }
+
+                return new JsonResult(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = $"Произошла ошибка: {ex.Message}" });
+            }
         }
 
         /// <summary>

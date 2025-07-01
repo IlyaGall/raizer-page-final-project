@@ -1,21 +1,16 @@
-﻿using AuthService.BLL.Dto;
+﻿using CartService.BLL;
+using ConnectBackEnd;
 using GlobalVariablesRP;
-using ManagersShopsService.BLL.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using CartService.BLL;
-using ProductService.BLL;
-using System.Net.Http.Headers;
-using System.Text.Json;
-using System.Text;
 using Model.Cart;
-using Model.User;
-using WebApplication1.Model.Product.ProductDto;
-using Model.Product;
+using ProductService.BLL;
 using ShopService.Domain;
-using System.Collections.Generic;
-using ConnectBackEnd;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+using WebApplication1.Model.Product.ProductDto;
 
 namespace WebApplication1.Pages
 {
@@ -27,7 +22,7 @@ namespace WebApplication1.Pages
         public CartItemModel(IHttpClientFactory clientFactory)
         {
             _client = clientFactory.CreateClient();
-            _client.BaseAddress = new Uri(GlobalVariables.GETWAY_OCELOT);
+            _client.BaseAddress = new Uri(GlobalVariables.GATEWAY);
         }
 
 
@@ -40,7 +35,7 @@ namespace WebApplication1.Pages
         public async Task OnGetAsync()
         {
             var response = await _client.GetAsync(
-                $"{GlobalVariables.GETWAY_OCELOT}" +
+                $"{GlobalVariables.GATEWAY}" +
                 $"{GlobalVariables.GET_INFO_SHOP}{Id}");
 
             if (response.IsSuccessStatusCode)
@@ -76,7 +71,7 @@ namespace WebApplication1.Pages
         {
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
             var responseUser = await _client.GetAsync(
-                $"{GlobalVariables.GETWAY_OCELOT}" +
+                $"{GlobalVariables.GATEWAY}" +
                 $"{GlobalVariables.GET_INFO_CART}");
 
             if (responseUser.IsSuccessStatusCode)
@@ -98,7 +93,7 @@ namespace WebApplication1.Pages
                 {
                     using var apiClient = new ConnectServer();
                     var item = await apiClient.GetAsync<ProductDto>(
-                        $"{GlobalVariables.GETWAY_OCELOT}" +
+                        $"{GlobalVariables.GATEWAY}" +
                         $"{GlobalVariables.GET_PRODUCT_ID}{cart.ProductId}");
 
                     if (item == null) continue;
@@ -142,8 +137,8 @@ namespace WebApplication1.Pages
                 _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
 
                 var request = new HttpRequestMessage(
-                    HttpMethod.Delete, 
-                    $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.DELETE_PRODUCT_CART}")
+                    HttpMethod.Delete,
+                    $"{GlobalVariables.GATEWAY}{GlobalVariables.DELETE_PRODUCT_CART}")
                 {
                     Content = new StringContent(
                     JsonSerializer.Serialize(deleteDto),
@@ -187,8 +182,8 @@ namespace WebApplication1.Pages
             {
                 _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
                 var response = await _client.PutAsJsonAsync(
-                    $"{GlobalVariables.GETWAY_OCELOT}" +
-                    $"{GlobalVariables.PUT_CART_UPDATE}", 
+                    $"{GlobalVariables.GATEWAY}" +
+                    $"{GlobalVariables.PUT_CART_UPDATE}",
                     request);
 
                 if (!response.IsSuccessStatusCode)
@@ -240,7 +235,7 @@ namespace WebApplication1.Pages
                   new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
 
                 var response = await _client.PostAsJsonAsync(
-                    $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.POST_ADD_PRODUCT}",
+                    $"{GlobalVariables.GATEWAY}{GlobalVariables.POST_ADD_PRODUCT}",
                     product,
                     options);
 
