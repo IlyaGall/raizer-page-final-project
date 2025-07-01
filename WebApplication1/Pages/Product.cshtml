@@ -25,10 +25,24 @@
 		</div>
 
 		<div style="margin-top: 30px;">
-			<textarea id="commentText" placeholder="Ваш комментарий"
-					  style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; min-height: 100px;"></textarea>
-			<button id="addCommentBtn" class="btn" style="background: #4a6fa5; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">
-				Добавить комментарий
+            <form method="post" data-ajax="true" id="addCommentForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" value="@Model.ShopId" id="addCommentShopId"/>
+                <input type="hidden" value="@Model.Product.Id" id="addCommentProductId"/>
+			    <textarea id="addCommentText" placeholder="Ваш комментарий"
+					style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; min-height: 100px;">
+                </textarea>
+                <div class="stars-input">
+                    <span class="star" data-value="1">☆</span>
+                    <span class="star" data-value="2">☆</span>
+                    <span class="star" data-value="3">☆</span>
+                    <span class="star" data-value="4">☆</span>
+                    <span class="star" data-value="5">☆</span>
+                    <input type="hidden" id="addCommentEstimation" value="-1">
+                </div>
+            </form>
+            <button id="addCommentBtn" class="btn" style="background: #4a6fa5; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">
+				    Добавить комментарий
 			</button>
 		</div>
 	</div>
@@ -197,26 +211,96 @@
         .comment-text {
             margin-top: 8px;
         }
+
+        .star-rating {
+            display: inline-flex;
+            direction: rtl; /* Справа налево для эффекта выделения */
+            margin-bottom: 10px;
+        }
+
+        .star-rating input {
+            display: none; /* Скрываем настоящие input */
+        }
+
+        .star-rating label {
+            color: #ddd; /* Цвет неактивных звёзд */
+            font-size: 24px;
+            cursor: pointer;
+            margin: 0 2px;
+        }
+
+        .star-rating input:checked ~ label,
+        .star-rating label:hover,
+        .star-rating label:hover ~ label {
+            color: #ffc107; /* Жёлтый цвет активных звёзд */
+        }
+
+        .static-stars {
+            color: #ffc107;
+            font-size: 18px;
+        }
+
+        .star {
+            color: #ddd;
+            font-size: 18px;
+            cursor: default;
+        }
+
+        .star.active {
+            color: #ffc107;
+        }
+
+        .stars-input {
+        display: inline-block;
+        margin-left: 10px;
+        }
+
+        .stars-input .star {
+            font-size: 24px;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s;
+            margin-right: 5px;
+        }
+
+        .stars-input .star.active,
+        .stars-input .star:hover,
+        .stars-input .star:hover ~ .star {
+            color: #ffc107;
+        }
     </style>
 }
 
 @section Scripts {
 	<script>
 		document.addEventListener('DOMContentLoaded', function () {
-			
+
         // Получаем ID товара из URL
         const urlParams = new URLSearchParams(window.location.search);
-        const productId = urlParams.get('id') || '@Model.RouteData.Values["id"]';
+        const productId = urlParams.get('id') || '@Model.Product.Id';
         if (productId)
         {
             loadProductInfo(productId);
             loadComments(productId); // Загружаем комментарии
         }
-			// Обработчик для добавления комментария
-			document.getElementById('addCommentBtn').addEventListener('click', function() {
-				addComment(productId);
-			});
-		});
+		    // Обработчик для добавления комментария
+		    document.getElementById('addCommentBtn').addEventListener('click', function() {
+			    addComment();
+		    });
+        });
+
+        document.querySelectorAll('.stars-input .star').forEach(star => {
+            star.addEventListener('click', function() {
+                const value = parseInt(this.getAttribute('data-value'));
+                document.getElementById('addCommentEstimation').value = value;
+        
+                // Обновляем отображение звёзд
+                document.querySelectorAll('.stars-input .star').forEach((s, index) => {
+                    s.textContent = index < value ? '★' : '☆';
+                    s.classList.toggle('active', index < value);
+                });
+            });
+        });
 
 		async function loadProductInfo(productId) {
 			try {
@@ -279,7 +363,12 @@
 		// Функции для работы с комментариями
 		async function loadComments(productId) {
 			try {
-				const response = await fetch(`?handler=Comments&productId=${productId}`);
+				const response = await fetch(`?handler=Comments&productId=${productId}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                });
 				if (!response.ok) throw new Error('Ошибка загрузки комментариев');
 				const comments = await response.json();
 				renderComments(comments);
@@ -292,10 +381,6 @@
 
 		function renderComments(comments) {
 			const container = document.getElementById('commentsContainer');
-			if (comments.length === 0) {
-				container.innerHTML = '<p style="text-align: center; color: #666;">Пока нет комментариев. Будьте первым!</p>';
-				return;
-			}
 
 			container.innerHTML = comments.map(comment => `
 				<div class="comment">
@@ -305,6 +390,11 @@
 					<div class="comment-text">${comment.text}</div>
 				</div>
 			`).join('');
+
+            if (comments.length === 0) {
+				container.innerHTML = '<p style="text-align: center; color: #666;">Пока нет комментариев. Будьте первым!</p>';
+				return;
+			}
 		}
 
         function renderStars(rating) {
@@ -324,68 +414,47 @@
             return stars;
         }
 
-		async function addComment(productId) {
-			const text = document.getElementById('commentText').value.trim();
-			if (!text) return;
+		function addComment() {
 
-			try {
-				const response = await fetch('?handler=AddComment', {
-					method: 'POST',
-					headers: {
+			const commentData = {
+                UserId: 0,
+                UserName: 'n/a',
+                ShopId: parseInt(document.getElementById('addCommentShopId').value),
+                ProductId: parseInt(document.getElementById('addCommentProductId').value),
+                TextComment: document.getElementById('addCommentText').value,
+                Estimation: document.getElementById('addCommentEstimation').value
+            };
+            if(!commentData.TextComment) {
+                Console.Log('Comment text is null', commentData.TextComment);
+                return;
+            }
+            if(!commentData.Estimation || commentData.Estimation < 1 || commentData.Estimation > 5) {
+                Console.Log('Comment estimation is invalid', commentData.Estimation);
+                return;
+            }
+			fetch('?handler=AddComment', 
+            {
+				method: 'POST',
+				headers: {
 						'Content-Type': 'application/json',
 						'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
 					},
-					body: JSON.stringify({ productId, text })
-				});
-
-				if (!response.ok) throw new Error('Ошибка при добавлении комментария');
-
-				document.getElementById('commentText').value = '';
-				loadComments(productId); // Перезагружаем комментарии
-			} catch (error) {
-				console.error('Ошибка:', error);
-				alert('Не удалось добавить комментарий');
-			}
+					body: JSON.stringify(commentData)
+			})
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => { throw new Error(text) });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(data);
+                if(data.success){
+                    alert('Комментарий добавлен');
+                    document.getElementById('addCommentText').text = '';
+                    loadComments(commentData.ProductId);
+                } else { alert('Ошибка: ' + data.error); }
+            });
 		}
 	</script>
 }
-
-<style>
-    .star-rating {
-        display: inline-flex;
-        direction: rtl; /* Справа налево для эффекта выделения */
-        margin-bottom: 10px;
-    }
-
-    .star-rating input {
-        display: none; /* Скрываем настоящие input */
-    }
-
-    .star-rating label {
-        color: #ddd; /* Цвет неактивных звёзд */
-        font-size: 24px;
-        cursor: pointer;
-        margin: 0 2px;
-    }
-
-    .star-rating input:checked ~ label,
-    .star-rating label:hover,
-    .star-rating label:hover ~ label {
-        color: #ffc107; /* Жёлтый цвет активных звёзд */
-    }
-
-    .static-stars {
-        color: #ffc107;
-        font-size: 18px;
-    }
-
-    .star {
-        color: #ddd;
-        font-size: 18px;
-        cursor: default;
-    }
-
-    .star.active {
-        color: #ffc107;
-    }
-</style>

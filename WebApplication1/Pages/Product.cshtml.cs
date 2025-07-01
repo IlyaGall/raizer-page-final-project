@@ -1,7 +1,11 @@
+using CommentService.BLL;
 using ConnectBackEnd;
 using GlobalVariablesRP;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Model.Product;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using WebApplication1.Model.Comment;
 using WebApplication1.Model.Product.ProductDto;
@@ -13,10 +17,13 @@ namespace WebApplication1.Pages
     {
         public string Message { get; private set; } = "";
 
-        private string IdProduct { get; set; } = string.Empty;
+        public Product Product { get; set; }
+        public int ShopId { get; set; }
         private readonly ILogger _logger;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly HttpClient _client;
+        private readonly string _jwtCookieName = "JWTToken";
+        private readonly string _authHeaderValue = "Bearer";
         /// <summary>
         /// Конструктор страницы
         /// </summary>
@@ -33,10 +40,22 @@ namespace WebApplication1.Pages
             _client.BaseAddress = new Uri(GlobalVariables.GATEWAY);
             _logger.LogDebug("New instance of ProductModel class was initialized");
         }
-        public void OnGet(string id)
+        public async Task OnGet(int id)
         {
             Message = $"Id: {id}";
-            IdProduct = id;
+            using var apiClient = new ConnectServer();
+            var product = await apiClient.GetAsync<ProductDto>(GlobalVariables.GET_PRODUCT_ID + id);
+            if (product.IsSuccess)
+            {
+                Product = new Product
+                {
+                    Id = product.Data.ProductId,
+                    Name = product.Data.NameProduct,
+                    Description = product.Data.Description,
+                    Price = product.Data.Price,
+                };
+                ShopId = product.Data.ShopId;
+            }
         }
 
         /// <summary>
@@ -44,7 +63,7 @@ namespace WebApplication1.Pages
         /// </summary>
         public void LoadInfoProduct()
         {
-
+            _logger.LogDebug("Loading product info");
         }
 
         /// <summary>
@@ -86,31 +105,50 @@ namespace WebApplication1.Pages
             _logger.LogDebug("Trying to load comments for product: " + productId);
             using var client = _httpClientFactory.CreateClient();
             var response = await client.GetAsync($"{GlobalVariables.GATEWAY}{GlobalVariables.GET_COMMENTS_BY_PRODUCT}{productId}");
-
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogInformation($"Failed to load comments: {response.Content}");
+                _logger.LogInformation($"Failed to load comments: ");
                 return new JsonResult(new { error = "Error" });
             }
 
             var content = await response.Content.ReadAsStringAsync();
             _logger.LogDebug("Comments response:" + content);
-            var comments = JsonSerializer.Deserialize<CommentModel[]>(content, new JsonSerializerOptions
+            var comments = JsonSerializer.Deserialize<CommentDto[]>(content, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
             });
             return new JsonResult(comments);
-            /*
-            using var apiClient = new ConnectServer();
-            var response = await apiClient.GetAsync<List<CommentModel>>(GlobalVariables.GET_COMMENTS_BY_PRODUCT + productId);
-            if (!response.IsSuccess)
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<JsonResult> OnPostAddComment([FromBody] AddCommentDto dto)
+        {
+            try
             {
-                _logger.LogInformation($"Failed to load comments {response.ErrorMessage}");
-                return new JsonResult(response.ErrorMessage);
+                _logger.LogDebug("Trying to add comment");
+                using var client = _httpClientFactory.CreateClient();
+                client.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue(_authHeaderValue, Request.Cookies[_jwtCookieName]);
+                var request = new HttpRequestMessage(HttpMethod.Post,
+                    $"{GlobalVariables.GATEWAY}{GlobalVariables.ADD_COMMENT}")
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(dto), Encoding.UTF8, "application/json")
+                };
+
+                var response = await client.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation("Api rejected add comment request");
+                    return new JsonResult(new { success = false, error = await response.Content.ReadAsStringAsync() });
+                }
+                _logger.LogInformation("New comment created successfuly");
+                return new JsonResult(new { success = true });
             }
-            _logger.LogInformation($"Loaded {response.Data.Count()} comments for product {productId}");
-            return new JsonResult(response);
-            */
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception occurred on adding comment");
+                return new JsonResult(new { success = false, error = ex.Message });
+            }
         }
     }
 }

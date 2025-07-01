@@ -1,6 +1,6 @@
 ﻿namespace WebApplication1.Model.Comment
 {
-    public class CommentModel
+    public class CommentDto
     {
         public int UserId { get; set; }
         public string UserName { get; set; }
