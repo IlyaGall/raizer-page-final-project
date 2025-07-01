@@ -28,7 +28,7 @@ namespace WebApplication1.Pages
 
         public string Message { get; private set; } = "";
         private string IdProduct { get; set; } = string.Empty;
-        public CartDto Cart { get; set; }
+        public CartDto Cart { get; set; } = new CartDto();
 
         public void OnGet(string id)
         {

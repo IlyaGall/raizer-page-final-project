@@ -275,7 +275,6 @@
 				// Отрисовываем данные на странице
 				renderProductInfo(productData);
 			} catch (error) {
-				console.error('Ошибка:', error);
 				document.getElementById('productContainer').className = 'error-message';
 				document.getElementById('productContainer').innerHTML =
 					'<p>Не удалось загрузить информацию о товаре. Пожалуйста, попробуйте позже.</p>';

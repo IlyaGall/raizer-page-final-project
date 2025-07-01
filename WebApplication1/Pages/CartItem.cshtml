@@ -2,6 +2,7 @@
 @model WebApplication1.Pages.CartItemModel
 @{
     ViewData["Title"] = "Корзина";
+    List<string> namelist = new List<string> { "Tom", "John", "Nancy" };
 }
 
 @Html.AntiForgeryToken()
@@ -20,7 +21,7 @@
                 <div class="card-header bg-secondary text-white">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5>Корзина</h5>
-                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addCartModal">
+                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addOrderModal">
                             <i class="fas fa-plus"></i> Оформить заказ
                         </button>
                     </div>
@@ -88,17 +89,66 @@
     </div>
 </div>
 
+<!-- Модальное окно оформления заказа -->
+<div class="modal fade" id="addOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Оформление заказа</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addOrderForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="orderShippingMethod" class="form-label">Способ доставки</label>
+                                <div class="col-md-10">
+                                    <input type="checkbox" for="orderShippingMethod" value="0"> Курьером<br />
+                                    <input type="checkbox" for="orderShippingMethod" value="1"> На пункт ПВЗ<br />
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="orderPaymentMethod" class="form-label">Способ оплаты</label>
+                                <div class="col-md-10">
+                                    <input type="checkbox" name="orderPaymentMethod" value="0"> Кредитная карта<br />
+                                    <input type="checkbox" name="orderPaymentMethod" value="1"> Наличные<br />
+                                    <input type="checkbox" name="orderPaymentMethod" value="2"> Наложенный платеж<br />
+                                    <input type="checkbox" name="orderPaymentMethod" value="3"> Электронный кошелек<br />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="orderAddress" class="form-label">Адрес доставки</label>
+                                <textarea class="form-control" id="orderAddress" rows="4"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="orderProductId" value="@Model.Cart.ProductId">
+                    <input type="hidden" id="orderUserId" value="@Model.Cart.UserId">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveOrderBtn">Добавить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             loadProducts();
 
             // Обработчики кнопок
+            document.getElementById('saveOrderBtn').addEventListener('click', addOrder);
+
             document.getElementById('updateProductBtn').addEventListener('click', function () {
                 const idcart = document.getElementById('editId').value;
                 const count = document.getElementById('editProductCount').value;
-                console.log('4+');
-                console.log(idcart);
+
                 updateProduct(idcart, count);
                 
                 $('#editProductModal').modal('hide');
@@ -106,8 +156,7 @@
 
             document.getElementById('confirmRemoveProductBtn').addEventListener('click', function () {
                 const idcart = document.getElementById('productToRemoveId').value;
-                console.log('3+');
-                console.log(idcart);
+
                 deleteProduct(idcart);
 
                 $('#confirmRemoveProductModal').modal('hide');
@@ -121,8 +170,7 @@
                     return response.json();
                 })
                 .then(data => renderProducts(data))
-                .catch(error => {
-                    console.error('Error:', error);
+                .catch(error => {                   
                     const container = document.getElementById('productsList');
                     if (container) {
                         container.innerHTML = 
@@ -149,24 +197,16 @@
             }
         }
 
-        function addProduct() {
+        function addOrder() {
+            console.log('7+');
+
             const productData = {
-                shopId: parseInt(document.getElementById('productShopId').value),
-                clusterId: parseInt(document.getElementById('productClusterId').value || 0),
-                nameProduct: document.getElementById('productName').value,
-                description: document.getElementById('productDescription').value,
-                price: parseFloat(document.getElementById('productPrice').value),
-                barcode: parseInt(document.getElementById('productBarcode').value || 0),
-                modelNumber: document.getElementById('productModelNumber').value
+                shippingMethodId: document.getElementById('orderShippingMethodId') || 0,
+                paymentMethodId: document.getElementById('orderPaymentMethodId') || 0,
+                address: document.getElementById('orderAddress').value
             };
-
-            // Валидация
-            if (!productData.nameProduct || isNaN(productData.price) || productData.price <= 0) {
-                alert('Пожалуйста, укажите название товара и корректную цену');
-                return;
-            }
-
-            fetch('?handler=SaveProduct', {
+            console.log('6+');
+            fetch('?handler=CreateOrder', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -174,23 +214,22 @@
                 },
                 body: JSON.stringify(productData)
             })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.text().then(text => { throw new Error(text) });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        $('#addProductModal').modal('hide');
-                        document.getElementById('addProductForm').reset();
-                        loadProducts();
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Ошибка при добавлении товара: ' + error.message);
-                });
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => { throw new Error(text) });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    $('#addOrderModal').modal('hide');
+                    document.getElementById('addOrderForm').reset();
+                    deleteCart(productData.userId);
+                }
+            })
+            .catch(error => {
+                alert('Ошибка при оформлении заказа: ' + error.message);
+            });
         }
 
         function openEditProductModal(product) {
@@ -332,8 +371,7 @@
             const deleteDto = {
                 Id: parseInt(id)
             };
-            console.log(id);
-            console.log(deleteDto);
+
             fetch(`?handler=DeleteProduct`, {
                 method: 'POST', // Или 'DELETE' не поддерживается!!!!
                 headers: {
@@ -351,6 +389,32 @@
             })
             .catch(error => {                    
                 alert('Произошла ошибка при удалении позиции');
+            });
+        }
+        
+        function deleteCart(id) {
+
+            const deleteDto = {
+                Id: parseInt(id)
+            };
+
+            fetch(`?handler=DeleteCart`, {
+                method: 'POST', // Или 'DELETE' не поддерживается!!!!
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify(deleteDto) // Сериализуем объект в JSON
+            })
+            .then(response => {
+                if (response.ok) {
+                    loadProducts();
+                } else {
+                    alert('Не удалось удалить корзину');
+                }
+            })
+            .catch(error => {
+                alert('Произошла ошибка при удалении корзины');
             });
         }
 
