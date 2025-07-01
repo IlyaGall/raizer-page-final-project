@@ -9,13 +9,31 @@ using System.Text;
 using System.Text.Json;
 using WebApplication1.Model.Comment;
 using WebApplication1.Model.Product.ProductDto;
+using System.Xml.Linq;
+using GlobalVariablesRP;
+using AuthService.BLL.Dto;
+using ManagersShopsService.BLL.Dto;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using CartService.BLL;
+using ShopService.Domain;
 
 namespace WebApplication1.Pages
 {
     // https://localhost:7100/Product?name=ds
     public class ProductModel : PageModel
     {
+        private readonly HttpClient _client;
+
+        public ProductModel(IHttpClientFactory clientFactory)
+        {
+            _client = clientFactory.CreateClient();
+            _client.BaseAddress = new Uri(GlobalVariables.GETWAY_OCELOT);
+        }
+
         public string Message { get; private set; } = "";
+        private string IdProduct { get; set; } = string.Empty;
+        public CartDto Cart { get; set; }
 
         public Product Product { get; set; }
         public int ShopId { get; set; }

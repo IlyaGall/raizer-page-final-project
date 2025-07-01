@@ -62,6 +62,11 @@
         /// </summary>
         public const string UPDATE_PRODUCT = "/gateway/Product/Update";
 
+        /// <summary>
+        /// Получить информацию о корзине пользователя
+        /// </summary>
+        public const string GET_PRODUCTS_BY_USER = "/gateway/Product/GetProductsByIds?id=";
+
         #endregion
 
         #region Comment
@@ -160,9 +165,32 @@
         public const string PUT_SHOP_UPDATE = "/gateway/Shop/Update";
 
         /// <summary>
-        /// Получить информацию о продутах магазина
+        /// Получить информацию о продуктах магазина
         /// </summary>
         public const string GET_SHOP_PRODUCTS = "/gateway/Product/GetShopProducts?ShopId=";
+
+        #endregion
+
+        #region cart
+        /// <summary>
+        /// Добавить продукт в корзину
+        /// </summary>
+        public const string POST_ADD_CART = "/gateway/Cart/AddCartProduct";
+
+        /// <summary>
+        /// Получить информацию о корзине пользователя
+        /// </summary>
+        public const string GET_INFO_CART = "/gateway/Cart/GetCartUser";
+
+        /// <summary>
+        /// Обновление количества единиц товара в корзине
+        /// </summary>
+        public const string PUT_CART_UPDATE = "/gateway/Cart/UpdateProduct";
+
+        /// <summary>
+        /// Получить информацию о товарах пользователя
+        /// </summary>
+        public const string DELETE_PRODUCT_CART = "/gateway/Cart/DeleteProduct";
         #endregion
     }
 }

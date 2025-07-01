@@ -47,6 +47,32 @@
 		</div>
 	</div>
 </div>
+
+<!-- Модальное окно добавления продукта в корзину -->
+<div class="modal fade" id="addCartProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Добавить товар в корзину</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addCartProductForm">
+                    <div class="mb-3">
+                        <label for="productCount" class="form-label">Количество</label>
+                        <input type="text" class="form-control" id="productCount" required>
+                    </div>
+                    <input type="hidden" id="idProduct" value="@Model.Cart.Id">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveCartProductBtn">Добавить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Styles {
     <style>
         :root {
@@ -305,7 +331,7 @@
 		async function loadProductInfo(productId) {
 			try {
 				// Формируем URL для запроса
-				const url = `?handler=ProductInfo&id=${encodeURIComponent(productId)}`;
+                const url = `?handler=AddCartProduct&id=${encodeURIComponent(productId)}`;
 
 				// Показываем состояние загрузки
 				document.getElementById('productContainer').className = 'loading';
@@ -354,8 +380,10 @@
 						<span class="meta-item">Код: ${product.barcode}</span>
 					</div>
 					<p class="product-description">${product.description}</p>
-					<div class="product-price">${product.price.toLocaleString()} ₽</div>
-					<button class="btn">Добавить в корзину</button>
+					<div class="product-price">${product.price.toLocaleString()} ₽</div>                    
+                    <button class="btn btn-success btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#addProductToCart">
+                        <i class="fas fa-plus"></i> Добавить в корзину
+                    </button>
 				</div>
 			`;
 		}
@@ -455,6 +483,35 @@
                     loadComments(commentData.ProductId);
                 } else { alert('Ошибка: ' + data.error); }
             });
+		}
+
+        async function AddCartProduct(productId) {
+			try {
+                // Формируем данные запроса
+                const requestData = {
+                    userId: parseInt(document.getElementById('cartUserId').value),      
+                    productId: parseInt(document.getElementById('cartProductId').value),
+                    count: parseInt(document.getElementById('cartCount').value),
+                    price: parseInt(document.getElementById('cartPrice').value),
+                    discount: parseInt(document.getElementById('cartDiscount').value),
+                };
+
+				const response = await fetch('?handler=AddCartProduct', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+					},
+                    body: JSON.stringify({ requestData })
+				});
+
+				if (!response.ok) throw new Error('Ошибка при добавлении продукта в корзину');
+
+                showSuccessMessage('Товар в корзине');
+			} catch (error) {
+				console.error('Ошибка:', error);
+				alert('Не удалось добавить продукт в корзину');
+			}
 		}
 	</script>
 }
