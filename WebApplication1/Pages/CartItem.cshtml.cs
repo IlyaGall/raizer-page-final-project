@@ -1,21 +1,17 @@
-﻿using AuthService.BLL.Dto;
+﻿using CartService.BLL;
+using ConnectBackEnd;
 using GlobalVariablesRP;
-using ManagersShopsService.BLL.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using CartService.BLL;
-using ProductService.BLL;
-using System.Net.Http.Headers;
-using System.Text.Json;
-using System.Text;
 using Model.Cart;
-using Model.User;
-using WebApplication1.Model.Product.ProductDto;
-using Model.Product;
+using OrderService.Order;
+using ProductService.BLL;
 using ShopService.Domain;
-using System.Collections.Generic;
-using ConnectBackEnd;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+using WebApplication1.Model.Product.ProductDto;
 
 namespace WebApplication1.Pages
 {
@@ -30,11 +26,8 @@ namespace WebApplication1.Pages
             _client.BaseAddress = new Uri(GlobalVariables.GETWAY_OCELOT);
         }
 
-
         [BindProperty(SupportsGet = true)]
         public int Id { get; set; }
-        public int UserId { get; set; }
-
         public Cart Cart { get; set; }
 
         public async Task OnGetAsync()
@@ -167,6 +160,47 @@ namespace WebApplication1.Pages
         }
 
         /// <summary>
+        /// Удаление товара из корзины
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> OnPostDeleteCart([FromBody] DeleteProductDto deleteDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Page();
+            }
+
+            try
+            {
+                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+
+                var request = new HttpRequestMessage(
+                    HttpMethod.Delete,
+                    $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.DELETE_ALL_PRODUCT_CART}")
+                {
+                    Content = new StringContent(
+                    JsonSerializer.Serialize(deleteDto),
+                    Encoding.UTF8,
+                    "application/json")
+                };
+
+                var response = await _client.SendAsync(request);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return new OkResult();
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            return BadRequest();
+        }
+
+        /// <summary>
         /// Обновление количества 
         /// </summary>
         [HttpPost]
@@ -210,7 +244,7 @@ namespace WebApplication1.Pages
         /// <returns></returns>
         [HttpPost]
         [ValidateAntiForgeryToken] // Атрибут на серверной стороне для проверки токена
-        public async Task<IActionResult> OnPostSaveProductAsync([FromBody] AddProductDto product)
+        public async Task<IActionResult> OnPostCreateOrder([FromBody] AddOrderDto product)
         {
             var options = new JsonSerializerOptions
             {
@@ -231,16 +265,10 @@ namespace WebApplication1.Pages
                     return Unauthorized();
                 }
 
-                // 2. Валидация данных
-                if (string.IsNullOrWhiteSpace(product.NameProduct) || product.Price <= 0)
-                {
-                    return BadRequest("Название и цена товара обязательны");
-                }
-                _client.DefaultRequestHeaders.Authorization =
-                  new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
 
                 var response = await _client.PostAsJsonAsync(
-                    $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.POST_ADD_PRODUCT}",
+                    $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.POST_ADD_ORDER}",
                     product,
                     options);
 

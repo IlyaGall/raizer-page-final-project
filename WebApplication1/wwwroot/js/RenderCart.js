@@ -77,24 +77,24 @@ function renderCards(products) {
 
         const cartBtn = document.createElement('button');
         cartBtn.className = 'cart-btn';
-        //if (isAuthenticated())
+        if (isAuthenticated())
         {
             cartBtn.innerHTML = '♡︎ Добавить в корзину';
             cartBtn.dataset.productId = product.id;
 
             cartBtn.addEventListener('click', async () => {
                 try {
-                    /*const token = localStorage.getItem('jwtToken');
+                    const token = localStorage.getItem('jwtToken');
                     if (!token) {
                         alert('Требуется авторизация');
                         return;
-                    }*/
+                    }
 
-                    const response = await fetch('https://localhost:7175/api/Cart/AddCartProduct?productId=' + product.id, {
+                    const response = await fetch('https://localhost:5011/gateway/Cart/AddCartProduct', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'/*,
-                            'Authorization': `Bearer ${token}`*/
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
                         }
                     });
 
@@ -110,11 +110,11 @@ function renderCards(products) {
                     alert('Произошла ошибка');
                 }
             });
-        } /*else {
+        } else {
             cartBtn.innerHTML = '🔒 Корзина';
             cartBtn.disabled = true;
             cartBtn.title = 'Требуется авторизация';
-        }*/
+        }
 
         const favoriteBtn = document.createElement('button');
         favoriteBtn.className = 'favorite-btn';

@@ -163,9 +163,41 @@
         public const string PUT_CART_UPDATE = "/gateway/Cart/UpdateProduct";
 
         /// <summary>
-        /// Получить информацию о товарах пользователя
+        /// Удалить из корзины
         /// </summary>
         public const string DELETE_PRODUCT_CART = "/gateway/Cart/DeleteProduct";
+
+        /// <summary>
+        /// Удалить корзину
+        /// </summary>
+        public const string DELETE_ALL_PRODUCT_CART = "/gateway/Cart/DeleteAllProduct";
+        #endregion
+
+        #region order
+        /// <summary>
+        /// Оформить заказ
+        /// </summary>
+        public const string POST_ADD_ORDER = "/gateway/Order/AddOrder";
+
+        /// <summary>
+        /// Получить все заказы пользователя
+        /// </summary>
+        public const string GET_INFO_ALL_ORDER = "/gateway/Order/GetAllOrderUser";
+
+        /// <summary>
+        /// Получить заказ пользователя
+        /// </summary>
+        public const string GET_INFO_ORDER = "/gateway/Order/GetOrderUser";
+
+        /// <summary>
+        /// Обновление статуса заказа
+        /// </summary>
+        public const string PUT_ORDER_UPDATE = "/gateway/Order/UpdateOrderStatus";
+
+        /// <summary>
+        /// Удалить заказ
+        /// </summary>
+        public const string DELETE_ORDER = "/gateway/Order/DeleteOrder";
         #endregion
     }
 }
