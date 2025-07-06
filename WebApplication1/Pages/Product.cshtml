@@ -3,9 +3,9 @@
 @{
 	ViewData["Title"] = "Информация о товаре";
 }
-<h2>@Model.Message</h2>
+@* <h2>@Model.Message</h2> *@
 <div class="container">
-	<h2>@Model.Message</h2>
+	@* <h2>@Model.Message</h2> *@
 
 	<!-- Основной контейнер для товара -->
 	<div id="productContainer" class="loading">
@@ -13,8 +13,7 @@
 	</div>
 
 	<!-- Скрытое поле для ID товара -->
-	<input type="hidden" id="productId" value="@Model.RouteData.Values["id"]">
-
+    <input type="hidden" id="productId" value="@Model.IdProduct">
 	<!-- Блок комментариев -->
 	<div class="comments-section" style="margin-top: 40px; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
 		<h3 style="margin-bottom: 20px; color: #166088;">Комментарии</h3>
@@ -243,18 +242,31 @@
             function() {
 				addComment(productId);
 			});            
-            //Обработчик добавления продукта в корзину
-            document.getElementById('addProductToCartBtn').addEventListener('click', 
-            function() {
-				addProductToCart(productId);
-			});
-		});
+           // Обработчик добавления продукта в корзину
+           document.addEventListener('click', async function(e) {
+            if (e.target.closest('#addToCartBtn')) {
+                try {
+                    // Получаем ID товара из скрытого поля
+                    const productId = document.getElementById('productId')?.value;
+                    console.log('Product ID:', productId); // Для отладки
+
+                    if (!productId) {
+                        throw new Error("Не удалось получить ID товара");
+                    }
+
+                    await addProductToCart(productId);
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    alert(error.message);
+                }
+            }
+        });
+	    });
 
 		async function loadProductInfo(productId) {
 			try {
 				// Формируем URL для запроса
-                const url = `?handler=AddCartProduct&id=${encodeURIComponent(productId)}`;
-
+                const url = `?handler=ProductInfo&id=${encodeURIComponent(productId)}`;
 				// Показываем состояние загрузки
 				document.getElementById('productContainer').className = 'loading';
 				document.getElementById('productContainer').innerHTML = 'Загрузка информации о товаре...';
@@ -291,22 +303,22 @@
 				? `<span class="stock-badge in-stock">В наличии (${product.amount} шт.)</span>`
 				: '<span class="stock-badge out-of-stock">Нет в наличии</span>';
 
-			container.innerHTML = `
-				<div class="product-image" style="background-image: url('${product.imageUrl}')"></div>
-				<div class="product-info">
-					<h1 class="product-title">${product.nameProduct}</h1>
-					<div class="stock-info">
-						${stockStatus}
-						<span class="meta-item">Арт: ${product.modelNumber}</span>
-						<span class="meta-item">Код: ${product.barcode}</span>
-					</div>
-					<p class="product-description">${product.description}</p>
-					<div class="product-price">${product.price.toLocaleString()} ₽</div>                    
-                    <button class="btn btn-success btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#addProductToCart">
-                        <i class="fas fa-plus"></i> Добавить в корзину
-                    </button>
-				</div>
-			`;
+                    container.innerHTML = `
+            <div class="product-image" style="background-image: url('${product.imageUrl}')"></div>
+            <div class="product-info">
+                <h1 class="product-title">${product.nameProduct}</h1>
+                <div class="stock-info">
+                    ${stockStatus}
+                    <span class="meta-item">Арт: ${product.modelNumber}</span>
+                    <span class="meta-item">Код: ${product.barcode}</span>
+                </div>
+                <p class="product-description">${product.description}</p>
+                <div class="product-price">${product.price.toLocaleString()} ₽</div>
+                <button id="addToCartBtn" class="btn btn-success btn-sm mt-2">
+                    <i class="fas fa-plus"></i> Добавить в корзину
+                </button>
+            </div>
+        `;
 		}
 
 		// Функции для работы с комментариями
@@ -391,5 +403,51 @@
 				alert('Не удалось добавить продукт в корзину');
 			}
 		}
-	</script>
+	
+                    
+        // функция добавление товара в корзину
+            async function addProductToCart(productId) {
+           
+                // Получаем цену товара
+                const priceElement = document.querySelector('.product-price');
+                if (!priceElement) throw new Error("Не удалось найти цену товара");
+
+                const price = parseFloat(priceElement.textContent
+                    .replace(/[^\d.,]/g, '')
+                    .replace(',', '.'));
+
+                // Только необходимые данные
+                const AddCartDto = {
+                    ProductId: parseInt(productId),
+                    Count: 1,
+                    Price: price,
+                    UserId :2,
+                    Discount:0
+                };
+                console.log(AddCartDto);
+                const response = await fetch('?handler=AddCartProduct', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(AddCartDto)
+                });
+
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(error || "Ошибка сервера");
+                }
+
+                alert('Товар добавлен в корзину!');
+           
+                console.error('Ошибка:', error);
+                alert('Ошибка: ' + error.message);
+            
+        }
+
+        function showSuccessMessage(message) {
+            alert(message); // Можно заменить на красивый toast-уведомление
+        }
+
+    </script>
 }

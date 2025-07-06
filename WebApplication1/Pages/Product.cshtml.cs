@@ -27,7 +27,7 @@ namespace WebApplication1.Pages
         }
 
         public string Message { get; private set; } = "";
-        private string IdProduct { get; set; } = string.Empty;
+        public string IdProduct { get; set; } = string.Empty;
         public CartDto Cart { get; set; } = new CartDto();
 
         public void OnGet(string id)
@@ -61,28 +61,51 @@ namespace WebApplication1.Pages
         /// </summary>
         private async Task<object> LoadInfoProduct(string id)
         {
-            using var apiClient = new ConnectServer();
-            var products = await apiClient.GetAsync<ProductDto>(GlobalVariables.GET_PRODUCT_ID + id);
+
+            var response = await _client.GetAsync(
+      $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.GET_PRODUCT_ID + id}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return BadRequest(new { message = "Товар с указанным ID не найден" });
+            }
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            // Десериализуем JSON с учетом структуры ApiResponse
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var apiResponse = JsonSerializer.Deserialize<ApiResponse<ProductDto>>(responseBody, options);
+
+            if (!apiResponse.IsSuccess || apiResponse.Data == null)
+            {
+                return BadRequest(new { message = apiResponse.ErrorMessage ?? "Не удалось получить данные о товаре" });
+            }
+
+            var product = apiResponse.Data;
+
             return new
             {
-                Id = products.Data.ProductId,
-                IdShop = products.Data.ShopId,
-                products.Data.ClusterId,
-                NameProduct = products.Data.NameProduct,
-                Description = products.Data.Description,
-                Price = products.Data.Price,
-                products.Data.Barcode,
-                ModelNumber = products.Data.ModelNumber,
+                Id = product.ProductId,
+                IdShop = product.ShopId,
+                product.ClusterId,
+                NameProduct = product.NameProduct,
+                Description = product.Description,
+                Price = product.Price,
+                product.Barcode,
+                ModelNumber = product.ModelNumber,
                 ImageUrl = "/images/product.jpg",
-                Amount = 12 
+                Amount = 12
             };
         }
 
         /// <summary>
         /// Добавления продукта в корзину
         /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken] // Атрибут на серверной стороне для проверки токена
+       
         public async Task<IActionResult> OnPostAddCartProduct([FromBody] AddCartDto request)
         {
             var options = new JsonSerializerOptions
