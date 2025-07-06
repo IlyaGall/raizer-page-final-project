@@ -18,8 +18,8 @@ namespace WebApplication1.Pages
     public class ProductModel : PageModel
     {
         public string Message { get; private set; } = "";
-        private string IdProduct { get; set; } = string.Empty;
-        public CartDto Cart { get; set; }
+        public string IdProduct { get; set; } = string.Empty;
+        public CartDto Cart { get; set; } = new CartDto();
 
         public Product Product { get; set; }
         public int ShopId { get; set; }
@@ -30,7 +30,7 @@ namespace WebApplication1.Pages
         private readonly string _authHeaderValue = "Bearer";
 
         /// <summary>
-        /// Конструктор страницы
+        /// ГЉГ®Г­Г±ГІГ°ГіГЄГІГ®Г° Г±ГІГ°Г Г­ГЁГ¶Г»
         /// </summary>
         /// <param name="clientFactory"></param>
         /// <param name="logger"></param>
@@ -64,7 +64,7 @@ namespace WebApplication1.Pages
         }
 
         /// <summary>
-        /// Загрузка информации о товаре
+        /// Г‡Г ГЈГ°ГіГ§ГЄГ  ГЁГ­ГґГ®Г°Г¬Г Г¶ГЁГЁ Г® ГІГ®ГўГ Г°ГҐ
         /// </summary>
         public void LoadInfoProduct()
         {
@@ -72,11 +72,11 @@ namespace WebApplication1.Pages
         }
 
         /// <summary>
-        /// API endpoint для получения информации о товаре
+        /// API endpoint Г¤Г«Гї ГЇГ®Г«ГіГ·ГҐГ­ГЁГї ГЁГ­ГґГ®Г°Г¬Г Г¶ГЁГЁ Г® ГІГ®ГўГ Г°ГҐ
         /// </summary>
         public async Task<IActionResult> OnGetProductInfoAsync(string id)
         {
-            // Здесь вы получаете данные о товаре из базы данных или другого источника
+            // Г‡Г¤ГҐГ±Гј ГўГ» ГЇГ®Г«ГіГ·Г ГҐГІГҐ Г¤Г Г­Г­Г»ГҐ Г® ГІГ®ГўГ Г°ГҐ ГЁГ§ ГЎГ Г§Г» Г¤Г Г­Г­Г»Гµ ГЁГ«ГЁ Г¤Г°ГіГЈГ®ГЈГ® ГЁГ±ГІГ®Г·Г­ГЁГЄГ 
 
             var productInfo = await LoadInfoProduct(id);
 
@@ -84,10 +84,57 @@ namespace WebApplication1.Pages
         }
 
         /// <summary>
-        /// Добавления продукта в корзину
+
+        /// Г‡Г ГЈГ°ГіГ§ГЄГ  ГЁГ­ГґГ®Г°Г¬Г Г¶ГЁГЁ Г® ГІГ®ГўГ Г°ГҐ
         /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken] // Атрибут на серверной стороне для проверки токена
+        private async Task<object> LoadInfoProduct(string id)
+        {
+
+            var response = await _client.GetAsync(
+      $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.GET_PRODUCT_ID + id}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return BadRequest(new { message = "Г’Г®ГўГ Г° Г± ГіГЄГ Г§Г Г­Г­Г»Г¬ ID Г­ГҐ Г­Г Г©Г¤ГҐГ­" });
+            }
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            // Г„ГҐГ±ГҐГ°ГЁГ Г«ГЁГ§ГіГҐГ¬ JSON Г± ГіГ·ГҐГІГ®Г¬ Г±ГІГ°ГіГЄГІГіГ°Г» ApiResponse
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var apiResponse = JsonSerializer.Deserialize<ApiResponse<ProductDto>>(responseBody, options);
+
+            if (!apiResponse.IsSuccess || apiResponse.Data == null)
+            {
+                return BadRequest(new { message = apiResponse.ErrorMessage ?? "ГЌГҐ ГіГ¤Г Г«Г®Г±Гј ГЇГ®Г«ГіГ·ГЁГІГј Г¤Г Г­Г­Г»ГҐ Г® ГІГ®ГўГ Г°ГҐ" });
+            }
+
+            var product = apiResponse.Data;
+
+            return new
+            {
+                Id = product.ProductId,
+                IdShop = product.ShopId,
+                product.ClusterId,
+                NameProduct = product.NameProduct,
+                Description = product.Description,
+                Price = product.Price,
+                product.Barcode,
+                ModelNumber = product.ModelNumber,
+                ImageUrl = "/images/product.jpg",
+                Amount = 12
+            };
+        }
+
+        /// <summary>
+
+        /// Г„Г®ГЎГ ГўГ«ГҐГ­ГЁГї ГЇГ°Г®Г¤ГіГЄГІГ  Гў ГЄГ®Г°Г§ГЁГ­Гі
+        /// </summary>
+       
         public async Task<IActionResult> OnPostAddCartProduct([FromBody] AddCartDto request)
         {
             var options = new JsonSerializerOptions
@@ -97,42 +144,42 @@ namespace WebApplication1.Pages
             };
             try
             {
-                // 1. Проверка аутентификации
+                // 1. ГЏГ°Г®ГўГҐГ°ГЄГ  Г ГіГІГҐГ­ГІГЁГґГЁГЄГ Г¶ГЁГЁ
                 if (!User.Identity.IsAuthenticated)
                 {
-                    return BadRequest(new { message = "Требуется авторизация" });
+                    return BadRequest(new { message = "Г’Г°ГҐГЎГіГҐГІГ±Гї Г ГўГІГ®Г°ГЁГ§Г Г¶ГЁГї" });
                 }
 
-                // 2. Базовая валидация
+                // 2. ГЃГ Г§Г®ГўГ Гї ГўГ Г«ГЁГ¤Г Г¶ГЁГї
                 //if (string.IsNullOrWhiteSpace(request.UserName))
                 {
-                    //return BadRequest(new { message = "Имя пользователя обязательно" });
+                    //return BadRequest(new { message = "Г€Г¬Гї ГЇГ®Г«ГјГ§Г®ГўГ ГІГҐГ«Гї Г®ГЎГїГ§Г ГІГҐГ«ГјГ­Г®" });
                 }
 
                 if (request.UserId <= 0)
                 {
-                    return BadRequest(new { message = "Некорректный ID пользователя" });
+                    return BadRequest(new { message = "ГЌГҐГЄГ®Г°Г°ГҐГЄГІГ­Г»Г© ID ГЇГ®Г«ГјГ§Г®ГўГ ГІГҐГ«Гї" });
                 }
 
-                // 3. Проверка существования пользователя
+                // 3. ГЏГ°Г®ГўГҐГ°ГЄГ  Г±ГіГ№ГҐГ±ГІГўГ®ГўГ Г­ГЁГї ГЇГ®Г«ГјГ§Г®ГўГ ГІГҐГ«Гї
                 var responseUser = await _client.GetAsync(
                     $"{GlobalVariables.GATEWAY}{GlobalVariables.GET_USER_ID}{request.UserId}");
 
                 if (!responseUser.IsSuccessStatusCode)
                 {
-                    return BadRequest(new { message = "Пользователь с указанным ID не найден" });
+                    return BadRequest(new { message = "ГЏГ®Г«ГјГ§Г®ГўГ ГІГҐГ«Гј Г± ГіГЄГ Г§Г Г­Г­Г»Г¬ ID Г­ГҐ Г­Г Г©Г¤ГҐГ­" });
                 }
 
-                // 4. Проверка соответствия данных
+                // 4. ГЏГ°Г®ГўГҐГ°ГЄГ  Г±Г®Г®ГІГўГҐГІГ±ГІГўГЁГї Г¤Г Г­Г­Г»Гµ
                 var responseBody = await responseUser.Content.ReadAsStringAsync();
                 var item = JsonSerializer.Deserialize<UserEasyDto>(responseBody, options);
 
                 //if (item.Id != request.UserId || item.Login != request.UserName)
                 {
-                    //return BadRequest(new { message = "ID или логин пользователя не совпадают. Пользователя не найдено!" });
+                    //return BadRequest(new { message = "ID ГЁГ«ГЁ Г«Г®ГЈГЁГ­ ГЇГ®Г«ГјГ§Г®ГўГ ГІГҐГ«Гї Г­ГҐ Г±Г®ГўГЇГ Г¤Г ГѕГІ. ГЏГ®Г«ГјГ§Г®ГўГ ГІГҐГ«Гї Г­ГҐ Г­Г Г©Г¤ГҐГ­Г®!" });
                 }
 
-                // 5. Добавление менеджера
+                // 5. Г„Г®ГЎГ ГўГ«ГҐГ­ГЁГҐ Г¬ГҐГ­ГҐГ¤Г¦ГҐГ°Г 
                 _client.DefaultRequestHeaders.Authorization =
                     new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
 
@@ -153,12 +200,12 @@ namespace WebApplication1.Pages
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = $"Произошла ошибка: {ex.Message}" });
+                return BadRequest(new { message = $"ГЏГ°Г®ГЁГ§Г®ГёГ«Г  Г®ГёГЁГЎГЄГ : {ex.Message}" });
             }
         }
 
         /// <summary>
-        /// Загрузка информации о товаре
+        /// Г‡Г ГЈГ°ГіГ§ГЄГ  ГЁГ­ГґГ®Г°Г¬Г Г¶ГЁГЁ Г® ГІГ®ГўГ Г°ГҐ
         /// </summary>
         private async Task<object> LoadInfoProduct(string id)
         {

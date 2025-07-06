@@ -1,16 +1,15 @@
-﻿using AuthService.BLL.Dto;
-using GlobalVariablesRP;
-using ManagersShopsService.BLL.Dto;
+﻿using GlobalVariablesRP;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using ProductService.BLL;
-using ShopService.BLL;
-using ShopService.Domain;
+using Model.Order;
+using OrderService.BLL.Dto.Order;
 using System.Net.Http.Headers;
+
 using System.Text;
 using System.Text.Json;
 using WebApplication1.Model.Product.ProductDto;
+
 
 namespace WebApplication1.Pages
 {
@@ -25,29 +24,35 @@ namespace WebApplication1.Pages
             _client.BaseAddress = new Uri(GlobalVariables.GATEWAY);
         }
 
-
         [BindProperty(SupportsGet = true)]
-        public int Id { get; set; }
-
-        public Shop Shop { get; set; }
+        public Order Order { get; set; }
 
         public async Task OnGetAsync()
         {
-
-            // _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
-            var response = await _client.GetAsync(
-                $"{GlobalVariables.GATEWAY}" +
-                $"{GlobalVariables.GET_INFO_SHOP}{Id}");
-
-            if (response.IsSuccessStatusCode)
+            Order = new Order
             {
+                Id = 1,
+            };
+        }
 
-                string responseBody = await response.Content.ReadAsStringAsync();
+
+        public async Task<JsonResult> OnGetOrderUser()
+        {
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+            var responseUser = await _client.GetAsync(
+                $"{GlobalVariables.GETWAY_OCELOT}" +
+                $"{GlobalVariables.GET_INFO_ALL_ORDER}");
+
+
+            if (responseUser.IsSuccessStatusCode)
+            {
+                string responseBody = await responseUser.Content.ReadAsStringAsync();
                 var options = new JsonSerializerOptions
                 {
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                     PropertyNameCaseInsensitive = true
                 };
+
                 var item = JsonSerializer.Deserialize<Shop>(responseBody, options);
 
                 Shop = new Shop
@@ -147,89 +152,65 @@ namespace WebApplication1.Pages
                     };
                     var items = JsonSerializer.Deserialize<List<ProductDto>>(responseBody, options);
 
+                if (itemsOrder == null || itemsOrder.Count == 0) return new JsonResult(Array.Empty<object>());
 
-                    if (items == null || items.Count == 0)
+                var result = itemsOrder
+                    .Select(item => new
                     {
-                        return new JsonResult(Array.Empty<object>());
-                    }
-                    var result = items.Select(item => new
-                    {
-                        productId = item.ProductId,
-                        nameProduct = item.NameProduct,
-                        Price = item.Price,
-                        modelNumber = item.ModelNumber,
-                        clusterId = item.ClusterId,
-                        barcode = item.Barcode,
-                        Description = item.Description
+                        Id = item.Id,
+                        UserId = item.UserId,
+                        Price = 0, //общая сумма
+                        Count = 0, //количество позиций
+                        DateCreated = item.DateCreated,
+                        ArriveDate = item.ArriveDate,
+                        ShippingMethod = item.ShippingMethod,
+                        PaymentMethod = item.PaymentMethod,
+                        ArriveAddress = item.ArriveAddress,
+                        OrderStatus = item.OrderStatus,
+                        DateOrderStatus = item.DateOrderStatus,
 
+                    }) 
+                    .ToList();
 
-                    })
-                     .ToList();
-                    /* < td >${ product.nameProduct || 'Не указано'}</ td >
-                         < td >${ product.price ? `${ product.price} ₽` : 'Не указана'}</ td >
-                         < td >${ product.barcode || 'Не указан'}</ td >
-                         < td >${ product.modelNumber || 'Не указана'}</ td >
-                         < td >${ product.clusterId || 'Не указан'}</ td >*/
-
-                    return new JsonResult(result);
-
-
-                }
-
+                return new JsonResult(result);
             }
-            catch (Exception ex)
+            else
             {
-                // return BadRequest(ex.Message);
+                TempData["SuccessMessage"] += "Ошибка при получении данных из корзины";
             }
 
-
-            //var products = new[]
-            //{
-            //    new { Id = 1, Name = "Товар 1", Price = 1000 },
-            //    new { Id = 2, Name = "Товар 2", Price = 2000 }
-            //};
-
-            // return new JsonResult(products);
-            return new JsonResult(Array.Empty<object>()); ;
+            return new JsonResult(Array.Empty<object>());
         }
 
         /// <summary>
-        /// Удаление товара из магазина
+        /// Удаление товара из корзины
         /// </summary>
-        /// <param name="productId"></param>
-        /// <returns></returns>
-        [HttpDelete]
+        /*[HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> OnPostDeleteProductAsync([FromBody] DeleteProductDto deleteDto)
+        public async Task<IActionResult> OnPostDeleteProduct([FromBody] DeleteProductDto deleteDto)
         {
             if (!ModelState.IsValid)
             {
                 return Page();
             }
 
-
             try
             {
-                // Удаляем товар
-                // Добавляем токен авторизации
-                _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+
 
 
                 var request = new HttpRequestMessage(HttpMethod.Delete,
             $"{GlobalVariables.GATEWAY}{GlobalVariables.DELETE_PRODUCT}")
+
                 {
                     Content = new StringContent(
-                JsonSerializer.Serialize(deleteDto),
-                Encoding.UTF8,
-                "application/json")
+                    JsonSerializer.Serialize(deleteDto),
+                    Encoding.UTF8,
+                    "application/json")
                 };
 
                 var response = await _client.SendAsync(request);
-
-                // Отправляем DELETE запрос с телом
-
-
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -245,10 +226,8 @@ namespace WebApplication1.Pages
         }
 
         /// <summary>
-        /// Обновление продукта
+        /// Обновление количества 
         /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> OnPostUpdateProduct([FromBody] UpdateProductDto request)
@@ -265,12 +244,12 @@ namespace WebApplication1.Pages
             }
             try
             {
-
-                _client.DefaultRequestHeaders.Authorization =
-              new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
-
+                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
                 var response = await _client.PutAsJsonAsync(
-                    $"{GlobalVariables.GATEWAY}{GlobalVariables.UPDATE_PRODUCT}",
+
+                    $"{GlobalVariables.GETWAY_OCELOT}" +
+                    $"{GlobalVariables.PUT_CART_UPDATE}",
+
                     request);
 
                 if (!response.IsSuccessStatusCode)
@@ -338,6 +317,7 @@ namespace WebApplication1.Pages
             {
                 return StatusCode(500, $"Ошибка при сохранении товара: {ex.Message}");
             }
+
         }
         #endregion
 
@@ -507,8 +487,6 @@ namespace WebApplication1.Pages
             }
         }
         #endregion
+
     }
-
-
-
 }

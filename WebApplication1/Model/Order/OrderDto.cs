@@ -1,10 +1,9 @@
-﻿namespace Model.Order
+﻿namespace OrderService.BLL.Dto.Order
 {
-    public class Order
+    public class OrderDto
     {
         public int Id { get; set; }
         public int UserId { get; set; }
-        public decimal Price { get; set; }
         public DateTime DateCreated { get; set; }
         public DateTime ArriveDate { get; set; }
         public int ShippingMethod { get; set; }
