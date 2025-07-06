@@ -177,7 +177,7 @@ namespace WebApplication1.Pages
 
                 var request = new HttpRequestMessage(
                     HttpMethod.Delete,
-                    $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.DELETE_ALL_PRODUCT_CART}")
+                    $"{GlobalVariables.GATEWAY}{GlobalVariables.DELETE_ALL_PRODUCT_CART}")
                 {
                     Content = new StringContent(
                     JsonSerializer.Serialize(deleteDto),

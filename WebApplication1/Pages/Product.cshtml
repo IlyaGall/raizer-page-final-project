@@ -13,7 +13,7 @@
 	</div>
 
 	<!-- Скрытое поле для ID товара -->
-    <input type="hidden" id="productId" value="@Model.IdProduct">
+	<input type="hidden" id="productId" value="@Model.IdProduct">
 	<!-- Блок комментариев -->
 	<div class="comments-section" style="margin-top: 40px; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
 		<h3 style="margin-bottom: 20px; color: #166088;">Комментарии</h3>
@@ -24,24 +24,24 @@
 		</div>
 
 		<div style="margin-top: 30px;">
-            <form method="post" data-ajax="true" id="addCommentForm">
-                @Html.AntiForgeryToken()
-                <input type="hidden" value="@Model.ShopId" id="addCommentShopId"/>
-                <input type="hidden" value="@Model.Product.Id" id="addCommentProductId"/>
-			    <textarea id="addCommentText" placeholder="Ваш комментарий"
-					style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; min-height: 100px;">
-                </textarea>
-                <div class="stars-input">
-                    <span class="star" data-value="1">☆</span>
-                    <span class="star" data-value="2">☆</span>
-                    <span class="star" data-value="3">☆</span>
-                    <span class="star" data-value="4">☆</span>
-                    <span class="star" data-value="5">☆</span>
-                    <input type="hidden" id="addCommentEstimation" value="-1">
-                </div>
-            </form>
-            <button id="addCommentBtn" class="btn" style="background: #4a6fa5; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">
-				    Добавить комментарий
+			<form method="post" data-ajax="true" id="addCommentForm">
+				@Html.AntiForgeryToken()
+				<input type="hidden" value="@Model.ShopId" id="addCommentShopId" />
+				<input type="hidden" value="@Model.Product.Id" id="addCommentProductId" />
+				<textarea id="addCommentText" placeholder="Ваш комментарий"
+						  style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; min-height: 100px;">
+				</textarea>
+				<div class="stars-input">
+					<span class="star" data-value="1">☆</span>
+					<span class="star" data-value="2">☆</span>
+					<span class="star" data-value="3">☆</span>
+					<span class="star" data-value="4">☆</span>
+					<span class="star" data-value="5">☆</span>
+					<input type="hidden" id="addCommentEstimation" value="-1">
+				</div>
+			</form>
+			<button id="addCommentBtn" class="btn" style="background: #4a6fa5; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">
+				Добавить комментарий
 			</button>
 		</div>
 	</div>
@@ -49,290 +49,312 @@
 
 <!-- Модальное окно добавления продукта в корзину -->
 <div class="modal fade" id="addCartProductModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">Добавить товар в корзину</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addCartProductForm">
-                    <div class="mb-3">
-                        <label for="productCount" class="form-label">Количество</label>
-                        <input type="text" class="form-control" id="productCount" required>
-                    </div>
-                    <input type="hidden" id="idProduct" value="@Model.Cart.Id">
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn btn-primary" id="saveCartProductBtn">Добавить</button>
-            </div>
-        </div>
-    </div>
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header bg-primary text-white">
+				<h5 class="modal-title">Добавить товар в корзину</h5>
+				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<form id="addCartProductForm">
+					<div class="mb-3">
+						<label for="productCount" class="form-label">Количество</label>
+						<input type="text" class="form-control" id="productCount" required>
+					</div>
+					<input type="hidden" id="idProduct" value="@Model.Cart.Id">
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+				<button type="button" class="btn btn-primary" id="saveCartProductBtn">Добавить</button>
+			</div>
+		</div>
+	</div>
 </div>
 
 @section Styles {
-    <style>
-        :root {
-            --primary-color: #4a6fa5;
-            --secondary-color: #166088;
-            --accent-color: #4fc3f7;
-            --light-color: #f8f9fa;
-            --dark-color: #343a40;
-            --success-color: #28a745;
-            --border-radius: 8px;
-            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
+	<style>
+		:root {
+			--primary-color: #4a6fa5;
+			--secondary-color: #166088;
+			--accent-color: #4fc3f7;
+			--light-color: #f8f9fa;
+			--dark-color: #343a40;
+			--success-color: #28a745;
+			--border-radius: 8px;
+			--box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+		}
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: var(--dark-color);
-            background-color: #f5f5f5;
-            margin: 0;
-            padding: 0;
-        }
+		body {
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			line-height: 1.6;
+			color: var(--dark-color);
+			background-color: #f5f5f5;
+			margin: 0;
+			padding: 0;
+		}
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+		.container {
+			max-width: 1200px;
+			margin: 0 auto;
+			padding: 20px;
+		}
 
-        .product-card {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            margin-top: 30px;
-        }
+		.product-card {
+			background: white;
+			border-radius: var(--border-radius);
+			box-shadow: var(--box-shadow);
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+			margin-top: 30px;
+		}
 
-        @@media (min-width: 768px) {
-            .product-card {
-                flex-direction: row;
-            }
-        }
+		@@media (min-width: 768px) {
+			.product-card {
+				flex-direction: row;
+			}
+		}
 
-        .product-image {
-            flex: 1;
-            min-height: 300px;
-            background-size: cover;
-            background-position: center;
-        }
+		.product-image {
+			flex: 1;
+			min-height: 300px;
+			background-size: cover;
+			background-position: center;
+		}
 
-        .product-info {
-            flex: 1;
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-        }
+		.product-info {
+			flex: 1;
+			padding: 30px;
+			display: flex;
+			flex-direction: column;
+		}
 
-        .product-title {
-            font-size: 2rem;
-            margin-bottom: 15px;
-            color: var(--secondary-color);
-        }
+		.product-title {
+			font-size: 2rem;
+			margin-bottom: 15px;
+			color: var(--secondary-color);
+		}
 
-        .product-description {
-            margin-bottom: 20px;
-            color: #555;
-        }
+		.product-description {
+			margin-bottom: 20px;
+			color: #555;
+		}
 
-        .product-price {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: var(--primary-color);
-            margin-bottom: 15px;
-        }
+		.product-price {
+			font-size: 1.8rem;
+			font-weight: bold;
+			color: var(--primary-color);
+			margin-bottom: 15px;
+		}
 
-        .product-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
+		.product-meta {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 15px;
+			margin-bottom: 25px;
+		}
 
-        .meta-item {
-            background: var(--light-color);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-        }
+		.meta-item {
+			background: var(--light-color);
+			padding: 8px 15px;
+			border-radius: 20px;
+			font-size: 0.9rem;
+		}
 
-        .btn {
-            display: inline-block;
-            padding: 12px 24px;
-            background: var(--primary-color);
-            color: white;
-            text-decoration: none;
-            border-radius: var(--border-radius);
-            font-weight: bold;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-            margin-top: auto;
-            align-self: flex-start;
-        }
+		.btn {
+			display: inline-block;
+			padding: 12px 24px;
+			background: var(--primary-color);
+			color: white;
+			text-decoration: none;
+			border-radius: var(--border-radius);
+			font-weight: bold;
+			transition: all 0.3s ease;
+			border: none;
+			cursor: pointer;
+			font-size: 1rem;
+			margin-top: auto;
+			align-self: flex-start;
+		}
 
-            .btn:hover {
-                background: var(--secondary-color);
-                transform: translateY(-2px);
-                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-            }
+			.btn:hover {
+				background: var(--secondary-color);
+				transform: translateY(-2px);
+				box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+			}
 
-        .stock-info {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-        }
+		.stock-info {
+			display: flex;
+			align-items: center;
+			margin-bottom: 20px;
+		}
 
-        .stock-badge {
-            padding: 5px 10px;
-            border-radius: var(--border-radius);
-            font-weight: bold;
-            margin-right: 10px;
-        }
+		.stock-badge {
+			padding: 5px 10px;
+			border-radius: var(--border-radius);
+			font-weight: bold;
+			margin-right: 10px;
+		}
 
-        .in-stock {
-            background-color: #d4edda;
-            color: #155724;
-        }
+		.in-stock {
+			background-color: #d4edda;
+			color: #155724;
+		}
 
-        .loading {
-            text-align: center;
-            padding: 50px;
-            font-size: 1.2rem;
-            color: var(--secondary-color);
-        }
+		.loading {
+			text-align: center;
+			padding: 50px;
+			font-size: 1.2rem;
+			color: var(--secondary-color);
+		}
 
-        .error-message {
-            color: #dc3545;
-            text-align: center;
-            padding: 50px;
-            font-size: 1.2rem;
-        }
+		.error-message {
+			color: #dc3545;
+			text-align: center;
+			padding: 50px;
+			font-size: 1.2rem;
+		}
 
-        /* Стили для комментариев */
-        .comment {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            margin-bottom: 15px;
-        }
+		/* Стили для комментариев */
+		.comment {
+			padding: 15px;
+			border-bottom: 1px solid #eee;
+			margin-bottom: 15px;
+		}
 
-        .comment-author {
-            font-weight: bold;
-            color: var(--secondary-color);
-        }
+		.comment-author {
+			font-weight: bold;
+			color: var(--secondary-color);
+		}
 
-        .comment-date {
-            color: #888;
-            font-size: 0.8rem;
-        }
+		.comment-date {
+			color: #888;
+			font-size: 0.8rem;
+		}
 
-        .comment-text {
-            margin-top: 8px;
-        }
+		.comment-text {
+			margin-top: 8px;
+		}
 
-        .star-rating {
-            display: inline-flex;
-            direction: rtl; /* Справа налево для эффекта выделения */
-            margin-bottom: 10px;
-        }
+		.star-rating {
+			display: inline-flex;
+			direction: rtl; /* Справа налево для эффекта выделения */
+			margin-bottom: 10px;
+		}
 
-        .star-rating input {
-            display: none; /* Скрываем настоящие input */
-        }
+			.star-rating input {
+				display: none; /* Скрываем настоящие input */
+			}
 
-        .star-rating label {
-            color: #ddd; /* Цвет неактивных звёзд */
-            font-size: 24px;
-            cursor: pointer;
-            margin: 0 2px;
-        }
+			.star-rating label {
+				color: #ddd; /* Цвет неактивных звёзд */
+				font-size: 24px;
+				cursor: pointer;
+				margin: 0 2px;
+			}
 
-        .star-rating input:checked ~ label,
-        .star-rating label:hover,
-        .star-rating label:hover ~ label {
-            color: #ffc107; /* Жёлтый цвет активных звёзд */
-        }
+				.star-rating input:checked ~ label,
+				.star-rating label:hover,
+				.star-rating label:hover ~ label {
+					color: #ffc107; /* Жёлтый цвет активных звёзд */
+				}
 
-        .static-stars {
-            color: #ffc107;
-            font-size: 18px;
-        }
+		.static-stars {
+			color: #ffc107;
+			font-size: 18px;
+		}
 
-        .star {
-            color: #ddd;
-            font-size: 18px;
-            cursor: default;
-        }
+		.star {
+			color: #ddd;
+			font-size: 18px;
+			cursor: default;
+		}
 
-        .star.active {
-            color: #ffc107;
-        }
+			.star.active {
+				color: #ffc107;
+			}
 
-        .stars-input {
-        display: inline-block;
-        margin-left: 10px;
-        }
+		.stars-input {
+			display: inline-block;
+			margin-left: 10px;
+		}
 
-        .stars-input .star {
-            font-size: 24px;
-            color: #ddd;
-            cursor: pointer;
-            transition: color 0.2s;
-            margin-right: 5px;
-        }
+			.stars-input .star {
+				font-size: 24px;
+				color: #ddd;
+				cursor: pointer;
+				transition: color 0.2s;
+				margin-right: 5px;
+			}
 
-        .stars-input .star.active,
-        .stars-input .star:hover,
-        .stars-input .star:hover ~ .star {
-            color: #ffc107;
-        }
-    </style>
+				.stars-input .star.active,
+				.stars-input .star:hover,
+				.stars-input .star:hover ~ .star {
+					color: #ffc107;
+				}
+	</style>
 }
 
 @section Scripts {
 	<script>
 		document.addEventListener('DOMContentLoaded', function () {
 
-        // Получаем ID товара из URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const productId = urlParams.get('id') || '@Model.Product.Id';
-        if (productId)
-        {
-            loadProductInfo(productId);
-            loadComments(productId); // Загружаем комментарии
-        }
+		// Получаем ID товара из URL
+		const urlParams = new URLSearchParams(window.location.search);
+		const productId = urlParams.get('id') || '@Model.Product.Id';
+		if (productId)
+		{
+			loadProductInfo(productId);
+			loadComments(productId); // Загружаем комментарии
+		}
 
-		    // Обработчик для добавления комментария
-		    document.getElementById('addCommentBtn').addEventListener('click', function() {
-			    addComment();
-		    });
-        });
+			// Обработчик для добавления комментария
+			document.getElementById('addCommentBtn').addEventListener('click', function() {
+				addComment();
+			});
+		});
 
-        document.querySelectorAll('.stars-input .star').forEach(star => {
-            star.addEventListener('click', function() {
-                const value = parseInt(this.getAttribute('data-value'));
-                document.getElementById('addCommentEstimation').value = value;
-        
-                // Обновляем отображение звёзд
-                document.querySelectorAll('.stars-input .star').forEach((s, index) => {
-                    s.textContent = index < value ? '★' : '☆';
-                    s.classList.toggle('active', index < value);
-                });
-            });
-        });
+		document.querySelectorAll('.stars-input .star').forEach(star => {
+			star.addEventListener('click', function() {
+				const value = parseInt(this.getAttribute('data-value'));
+				document.getElementById('addCommentEstimation').value = value;
+
+				// Обновляем отображение звёзд
+				document.querySelectorAll('.stars-input .star').forEach((s, index) => {
+					s.textContent = index < value ? '★' : '☆';
+					s.classList.toggle('active', index < value);
+				});
+			});
+		});
+
+		// Обработчик для динамически созданных кнопок
+		document.addEventListener(
+			'click', async function(e)
+		{
+			// Обработка клика по кнопке добавления в корзину
+			if (e.target && (e.target.id === 'addToCartBtn' || e.target.closest('#addToCartBtn')))
+			{
+				try
+				{
+					const productId = document.getElementById('productId').value;
+					if (!productId) throw new Error("Не удалось получить ID товара");
+
+					await addProductToCart(productId);
+				} catch (error)
+				{
+					console.error('Ошибка:', error);
+					alert(error.message);
+				}
+			}
+		});
+
 
 
 		async function loadProductInfo(productId) {
 			try {
 				// Формируем URL для запроса
-                const url = `?handler=ProductInfo&id=${encodeURIComponent(productId)}`;
+				const url = `?handler=ProductInfo&id=${encodeURIComponent(productId)}`;
 				// Показываем состояние загрузки
 				document.getElementById('productContainer').className = 'loading';
 				document.getElementById('productContainer').innerHTML = 'Загрузка информации о товаре...';
@@ -360,7 +382,7 @@
 		}
 
 		function renderProductInfo(product) {
-           
+
 			const container = document.getElementById('productContainer');
 			container.className = 'product-card';
 
@@ -369,33 +391,33 @@
 				? `<span class="stock-badge in-stock">В наличии (${product.amount} шт.)</span>`
 				: '<span class="stock-badge out-of-stock">Нет в наличии</span>';
 
-                    container.innerHTML = `
-            <div class="product-image" style="background-image: url('${product.imageUrl}')"></div>
-            <div class="product-info">
-                <h1 class="product-title">${product.nameProduct}</h1>
-                <div class="stock-info">
-                    ${stockStatus}
-                    <span class="meta-item">Арт: ${product.modelNumber}</span>
-                    <span class="meta-item">Код: ${product.barcode}</span>
-                </div>
-                <p class="product-description">${product.description}</p>
-                <div class="product-price">${product.price.toLocaleString()} ₽</div>
-                <button id="addToCartBtn" class="btn btn-success btn-sm mt-2">
-                    <i class="fas fa-plus"></i> Добавить в корзину
-                </button>
-            </div>
-        `;
+					container.innerHTML = `
+			<div class="product-image" style="background-image: url('${product.imageUrl}')"></div>
+			<div class="product-info">
+				<h1 class="product-title">${product.nameProduct}</h1>
+				<div class="stock-info">
+					${stockStatus}
+					<span class="meta-item">Арт: ${product.modelNumber}</span>
+					<span class="meta-item">Код: ${product.barcode}</span>
+				</div>
+				<p class="product-description">${product.description}</p>
+				<div class="product-price">${product.price.toLocaleString()} ₽</div>
+				<button id="addToCartBtn" class="btn btn-success btn-sm mt-2">
+					<i class="fas fa-plus"></i> Добавить в корзину
+				</button>
+			</div>
+		`;
 		}
 
 		// Функции для работы с комментариями
 		async function loadComments(productId) {
 			try {
 				const response = await fetch(`?handler=Comments&productId=${productId}`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                    }
-                });
+					headers: {
+						'Content-Type': 'application/json',
+						'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+					}
+				});
 				if (!response.ok) throw new Error('Ошибка загрузки комментариев');
 				const comments = await response.json();
 				renderComments(comments);
@@ -413,54 +435,54 @@
 				<div class="comment">
 					<div class="comment-author">${comment.userName}</div>
 					<div class="comment-date">${new Date(comment.dateCreated).toLocaleString()}</div>
-                    ${renderStars(comment.estimation)}
+					${renderStars(comment.estimation)}
 					<div class="comment-text">${comment.text}</div>
 				</div>
 			`).join('');
 
-            if (comments.length === 0) {
+			if (comments.length === 0) {
 				container.innerHTML = '<p style="text-align: center; color: #666;">Пока нет комментариев. Будьте первым!</p>';
 				return;
 			}
 		}
 
-        function renderStars(rating) {
-            const maxStars = 5;
-            let stars = '';
+		function renderStars(rating) {
+			const maxStars = 5;
+			let stars = '';
 
-            // Закрашенные звёзды
-            for (let i = 1; i <= rating; i++) {
-                stars += '★';
-            }
+			// Закрашенные звёзды
+			for (let i = 1; i <= rating; i++) {
+				stars += '★';
+			}
 
-            // Пустые звёзды
-            for (let i = rating + 1; i <= maxStars; i++) {
-                stars += '☆';
-            }
+			// Пустые звёзды
+			for (let i = rating + 1; i <= maxStars; i++) {
+				stars += '☆';
+			}
 
-            return stars;
-        }
+			return stars;
+		}
 
 		function addComment() {
-
+			
 			const commentData = {
-                UserId: 0,
-                UserName: 'n/a',
-                ShopId: parseInt(document.getElementById('addCommentShopId').value),
-                ProductId: parseInt(document.getElementById('addCommentProductId').value),
-                TextComment: document.getElementById('addCommentText').value,
-                Estimation: document.getElementById('addCommentEstimation').value
-            };
-            if(!commentData.TextComment) {
-                Console.Log('Comment text is null', commentData.TextComment);
-                return;
-            }
-            if(!commentData.Estimation || commentData.Estimation < 1 || commentData.Estimation > 5) {
-                Console.Log('Comment estimation is invalid', commentData.Estimation);
-                return;
-            }
-			fetch('?handler=AddComment', 
-            {
+				UserId: 0,
+				UserName: 'n/a',
+				ShopId: parseInt(document.getElementById('addCommentShopId').value),
+				ProductId: parseInt(document.getElementById('addCommentProductId').value),
+				TextComment: document.getElementById('addCommentText').value,
+				Estimation: document.getElementById('addCommentEstimation').value
+			};
+			if(!commentData.TextComment) {
+				Console.Log('Comment text is null', commentData.TextComment);
+				return;
+			}
+			if(!commentData.Estimation || commentData.Estimation < 1 || commentData.Estimation > 5) {
+				Console.Log('Comment estimation is invalid', commentData.Estimation);
+				return;
+			}
+			 fetch('?handler=AddComment',
+			{
 				method: 'POST',
 				headers: {
 						'Content-Type': 'application/json',
@@ -468,95 +490,84 @@
 					},
 					body: JSON.stringify(commentData)
 			})
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => { throw new Error(text) });
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log(data);
-                if(data.success){
-                    alert('Комментарий добавлен');
-                    document.getElementById('addCommentText').text = '';
-                    loadComments(commentData.ProductId);
-                } else { alert('Ошибка: ' + data.error); }
-            });
+			.then(response => {
+				if (!response.ok) {
+					return response.text().then(text => { throw new Error(text) });
+				}
+				return response.json();
+			})
+			.then(data => {
+				console.log(data);
+				if(data.success){
+					alert('Комментарий добавлен');
+					document.getElementById('addCommentText').text = '';
+					loadComments(commentData.ProductId);
+				} else { alert('Ошибка: ' + data.error); }
+			});
 		}
 
-        async function AddCartProduct(productId) {
-			try {
-                // Формируем данные запроса
-                const requestData = {
-                    userId: parseInt(document.getElementById('cartUserId').value),      
-                    productId: parseInt(document.getElementById('cartProductId').value),
-                    count: parseInt(document.getElementById('cartCount').value),
-                    price: parseInt(document.getElementById('cartPrice').value),
-                    discount: parseInt(document.getElementById('cartDiscount').value),
-                };
 
+
+
+
+				async function addProductToCart(productId) {
+			try {
+				// 1. Получаем цену
+				const priceElement = document.querySelector('.product-price');
+				if (!priceElement) throw new Error("Не найдена цена товара");
+
+				// Преобразуем цену в строку, чтобы избежать проблем с decimal
+				const priceText = priceElement.textContent
+					.replace(/[^\d.,]/g, '')
+					.replace(',', '.');
+				const price = parseFloat(priceText).toFixed(2); // Фиксируем 2 знака после запятой
+				//Вер, Ошибка была в конвертации данных double json и decemail в c#
+				// 2. Формируем запрос
+				const request = {
+					userId: parseInt(2), // Важно: должно совпадать с именем поля в AddCartDto
+					productId: parseInt(productId),
+					count: 1,
+					price: price,
+					discount: 0
+				};
+
+				console.log("Отправляемые данные:", request);
+
+				// 3. Получаем токен
+				const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+				// 4. Отправляем запрос
 				const response = await fetch('?handler=AddCartProduct', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
-						'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+						'RequestVerificationToken': token
 					},
-                    body: JSON.stringify({ requestData })
+					body: JSON.stringify(request)
 				});
 
-				if (!response.ok) throw new Error('Ошибка при добавлении продукта в корзину');
+				// 5. Обрабатываем ответ
+				if (!response.ok) {
+					const error = await response.text();
+					throw new Error(error || "Ошибка сервера");
+				}
 
-                showSuccessMessage('Товар в корзине');
+				const result = await response.json();
+				if (result.success) {
+					alert("Товар успешно добавлен в корзину!");
+				} else {
+					throw new Error(result.message || "Не удалось добавить товар в корзину");
+				}
 			} catch (error) {
-				console.error('Ошибка:', error);
-				alert('Не удалось добавить продукт в корзину');
+				console.error("Ошибка:", error);
+				alert("Ошибка: " + error.message);
 			}
 		}
-	
-                    
-        // функция добавление товара в корзину
-            async function addProductToCart(productId) {
-           
-                // Получаем цену товара
-                const priceElement = document.querySelector('.product-price');
-                if (!priceElement) throw new Error("Не удалось найти цену товара");
 
-                const price = parseFloat(priceElement.textContent
-                    .replace(/[^\d.,]/g, '')
-                    .replace(',', '.'));
 
-                // Только необходимые данные
-                const AddCartDto = {
-                    ProductId: parseInt(productId),
-                    Count: 1,
-                    Price: price,
-                    UserId :2,
-                    Discount:0
-                };
-                console.log(AddCartDto);
-                const response = await fetch('?handler=AddCartProduct', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(AddCartDto)
-                });
+				function showSuccessMessage(message) {
+			alert(message); // Можно заменить на красивый toast-уведомление
+		}
 
-                if (!response.ok) {
-                    const error = await response.text();
-                    throw new Error(error || "Ошибка сервера");
-                }
-
-                alert('Товар добавлен в корзину!');
-           
-                console.error('Ошибка:', error);
-                alert('Ошибка: ' + error.message);
-            
-        }
-
-        function showSuccessMessage(message) {
-            alert(message); // Можно заменить на красивый toast-уведомление
-        }
-
-    </script>
+	</script>
 }

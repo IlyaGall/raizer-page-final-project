@@ -6,7 +6,9 @@ using GlobalVariablesRP;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Model.Product;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using WebApplication1.Model.Comment;
@@ -18,7 +20,7 @@ namespace WebApplication1.Pages
     public class ProductModel : PageModel
     {
         public string Message { get; private set; } = "";
-        public string IdProduct { get; set; } = string.Empty;
+        public int IdProduct { get; set; } = 0;
         public CartDto Cart { get; set; } = new CartDto();
 
         public Product Product { get; set; }
@@ -48,8 +50,10 @@ namespace WebApplication1.Pages
         public async Task OnGet(int id)
         {
             Message = $"Id: {id}";
+            IdProduct = id;
             using var apiClient = new ConnectServer();
             var product = await apiClient.GetAsync<ProductDto>(GlobalVariables.GET_PRODUCT_ID + id);
+            
             if (product.IsSuccess)
             {
                 Product = new Product
@@ -91,7 +95,7 @@ namespace WebApplication1.Pages
         {
 
             var response = await _client.GetAsync(
-      $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.GET_PRODUCT_ID + id}");
+      $"{GlobalVariables.GATEWAY}{GlobalVariables.GET_PRODUCT_ID + id}");
 
             if (!response.IsSuccessStatusCode)
             {
@@ -131,10 +135,20 @@ namespace WebApplication1.Pages
         }
 
         /// <summary>
-
         /// Äîáàâëåíèÿ ïðîäóêòà â êîðçèíó
         /// </summary>
-       
+
+        [HttpPost]
+        public async Task<IActionResult> OnPostProducts()
+        {
+            var responseUser = await _client.GetAsync(
+                   $"{GlobalVariables.GATEWAY}{GlobalVariables.GET_USER_ID}{1}");
+            return null;
+        }
+
+
+         [HttpPost]
+        [ValidateAntiForgeryToken] // Атрибут на серверной стороне для проверки токена
         public async Task<IActionResult> OnPostAddCartProduct([FromBody] AddCartDto request)
         {
             var options = new JsonSerializerOptions
@@ -162,6 +176,26 @@ namespace WebApplication1.Pages
                 }
 
                 // 3. Ïðîâåðêà ñóùåñòâîâàíèÿ ïîëüçîâàòåëÿ
+                var jwtToken = Request.Cookies["JWTToken"];
+
+                if (jwtToken != null)
+                {
+                    // Парсим JWT вручную
+                    var handler = new JwtSecurityTokenHandler();
+                    var token_user = handler.ReadJwtToken(jwtToken);
+
+                    // Получаем данные из payload
+                    var userId = token_user.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
+                   
+
+                    request.UserId = Convert.ToInt32(userId);
+                  
+                    //  ViewData["Nickname"] = nickname;
+                }
+
+
+
+             
                 var responseUser = await _client.GetAsync(
                     $"{GlobalVariables.GATEWAY}{GlobalVariables.GET_USER_ID}{request.UserId}");
 
@@ -204,33 +238,22 @@ namespace WebApplication1.Pages
             }
         }
 
-        /// <summary>
-        /// Çàãðóçêà èíôîðìàöèè î òîâàðå
-        /// </summary>
-        private async Task<object> LoadInfoProduct(string id)
-        {
-            using var apiClient = new ConnectServer();
-            var products = await apiClient.GetAsync<ProductDto>(GlobalVariables.GET_PRODUCT_ID + id);
-            return new
-            {
-                Id = products.Data.ProductId,
-                IdShop = products.Data.ShopId,
-                products.Data.ClusterId,
-                NameProduct = products.Data.NameProduct,
-                Description = products.Data.Description,
-                Price = products.Data.Price,
-                products.Data.Barcode,
-                ModelNumber = products.Data.ModelNumber,
-                ImageUrl = "/images/product.jpg",
-                Amount = 12
-            };
-        }
+
+
+
+
+
 
         public async Task<JsonResult> OnGetComments(string productId)
         {
-            _logger.LogDebug("Trying to load comments for product: " + productId);
-            using var client = _httpClientFactory.CreateClient();
-            var response = await client.GetAsync($"{GlobalVariables.GATEWAY}{GlobalVariables.GET_COMMENTS_BY_PRODUCT}{productId}");
+
+            _client.DefaultRequestHeaders.Authorization =
+                   new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
+
+
+            //_logger.LogDebug("Trying to load comments for product: " + productId);
+            //using var client = _httpClientFactory.CreateClient();
+            var response = await _client.GetAsync($"{GlobalVariables.GATEWAY}{GlobalVariables.GET_COMMENTS_BY_PRODUCT}{productId}");
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogInformation($"Failed to load comments: ");
