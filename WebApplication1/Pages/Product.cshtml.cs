@@ -1,55 +1,82 @@
+using AuthService.BLL.Dto;
+using CartService.BLL;
+using CommentService.BLL;
+using ConnectBackEnd;
+using GlobalVariablesRP;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Model.Product;
-using System.Security.AccessControl;
-using ConnectBackEnd;
-using WebApplication1.Model.Product.ProductDto;
-using System.Xml.Linq;
-using GlobalVariablesRP;
-using AuthService.BLL.Dto;
-using ManagersShopsService.BLL.Dto;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
-using CartService.BLL;
-using ShopService.Domain;
+using WebApplication1.Model.Comment;
+using WebApplication1.Model.Product.ProductDto;
 
 namespace WebApplication1.Pages
 {
     // https://localhost:7100/Product?name=ds
     public class ProductModel : PageModel
     {
-        private readonly HttpClient _client;
-
-        public ProductModel(IHttpClientFactory clientFactory)
-        {
-            _client = clientFactory.CreateClient();
-            _client.BaseAddress = new Uri(GlobalVariables.GETWAY_OCELOT);
-        }
-
         public string Message { get; private set; } = "";
         public string IdProduct { get; set; } = string.Empty;
         public CartDto Cart { get; set; } = new CartDto();
 
-        public void OnGet(string id)
+        public Product Product { get; set; }
+        public int ShopId { get; set; }
+        private readonly ILogger _logger;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly HttpClient _client;
+        private readonly string _jwtCookieName = "JWTToken";
+        private readonly string _authHeaderValue = "Bearer";
+
+        /// <summary>
+        /// ГЉГ®Г­Г±ГІГ°ГіГЄГІГ®Г° Г±ГІГ°Г Г­ГЁГ¶Г»
+        /// </summary>
+        /// <param name="clientFactory"></param>
+        /// <param name="logger"></param>
+        /// <exception cref="ArgumentNullException"/>
+        public ProductModel(IHttpClientFactory clientFactory, ILogger<ProductModel> logger)
+        {
+            ArgumentNullException.ThrowIfNull(clientFactory);
+            ArgumentNullException.ThrowIfNull(logger);
+            _logger = logger;
+            _httpClientFactory = clientFactory;
+            _client = _httpClientFactory.CreateClient();
+            _client.BaseAddress = new Uri(GlobalVariables.GATEWAY);
+            _logger.LogDebug("New instance of ProductModel class was initialized");
+        }
+        public async Task OnGet(int id)
         {
             Message = $"Id: {id}";
-            IdProduct = id;
+            using var apiClient = new ConnectServer();
+            var product = await apiClient.GetAsync<ProductDto>(GlobalVariables.GET_PRODUCT_ID + id);
+            if (product.IsSuccess)
+            {
+                Product = new Product
+                {
+                    Id = product.Data.ProductId,
+                    Name = product.Data.NameProduct,
+                    Description = product.Data.Description,
+                    Price = product.Data.Price,
+                };
+                ShopId = product.Data.ShopId;
+            }
         }
 
         /// <summary>
-        /// Загрузка информации о товаре
+        /// Г‡Г ГЈГ°ГіГ§ГЄГ  ГЁГ­ГґГ®Г°Г¬Г Г¶ГЁГЁ Г® ГІГ®ГўГ Г°ГҐ
         /// </summary>
         public void LoadInfoProduct()
         {
-
+            _logger.LogDebug("Loading product info");
         }
 
         /// <summary>
-        /// API endpoint для получения информации о товаре
+        /// API endpoint Г¤Г«Гї ГЇГ®Г«ГіГ·ГҐГ­ГЁГї ГЁГ­ГґГ®Г°Г¬Г Г¶ГЁГЁ Г® ГІГ®ГўГ Г°ГҐ
         /// </summary>
         public async Task<IActionResult> OnGetProductInfoAsync(string id)
         {
-            // Здесь вы получаете данные о товаре из базы данных или другого источника
+            // Г‡Г¤ГҐГ±Гј ГўГ» ГЇГ®Г«ГіГ·Г ГҐГІГҐ Г¤Г Г­Г­Г»ГҐ Г® ГІГ®ГўГ Г°ГҐ ГЁГ§ ГЎГ Г§Г» Г¤Г Г­Г­Г»Гµ ГЁГ«ГЁ Г¤Г°ГіГЈГ®ГЈГ® ГЁГ±ГІГ®Г·Г­ГЁГЄГ 
 
             var productInfo = await LoadInfoProduct(id);
 
@@ -57,7 +84,8 @@ namespace WebApplication1.Pages
         }
 
         /// <summary>
-        /// Загрузка информации о товаре
+
+        /// Г‡Г ГЈГ°ГіГ§ГЄГ  ГЁГ­ГґГ®Г°Г¬Г Г¶ГЁГЁ Г® ГІГ®ГўГ Г°ГҐ
         /// </summary>
         private async Task<object> LoadInfoProduct(string id)
         {
@@ -67,12 +95,12 @@ namespace WebApplication1.Pages
 
             if (!response.IsSuccessStatusCode)
             {
-                return BadRequest(new { message = "Товар с указанным ID не найден" });
+                return BadRequest(new { message = "Г’Г®ГўГ Г° Г± ГіГЄГ Г§Г Г­Г­Г»Г¬ ID Г­ГҐ Г­Г Г©Г¤ГҐГ­" });
             }
 
             var responseBody = await response.Content.ReadAsStringAsync();
 
-            // Десериализуем JSON с учетом структуры ApiResponse
+            // Г„ГҐГ±ГҐГ°ГЁГ Г«ГЁГ§ГіГҐГ¬ JSON Г± ГіГ·ГҐГІГ®Г¬ Г±ГІГ°ГіГЄГІГіГ°Г» ApiResponse
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -82,7 +110,7 @@ namespace WebApplication1.Pages
 
             if (!apiResponse.IsSuccess || apiResponse.Data == null)
             {
-                return BadRequest(new { message = apiResponse.ErrorMessage ?? "Не удалось получить данные о товаре" });
+                return BadRequest(new { message = apiResponse.ErrorMessage ?? "ГЌГҐ ГіГ¤Г Г«Г®Г±Гј ГЇГ®Г«ГіГ·ГЁГІГј Г¤Г Г­Г­Г»ГҐ Г® ГІГ®ГўГ Г°ГҐ" });
             }
 
             var product = apiResponse.Data;
@@ -103,7 +131,8 @@ namespace WebApplication1.Pages
         }
 
         /// <summary>
-        /// Добавления продукта в корзину
+
+        /// Г„Г®ГЎГ ГўГ«ГҐГ­ГЁГї ГЇГ°Г®Г¤ГіГЄГІГ  Гў ГЄГ®Г°Г§ГЁГ­Гі
         /// </summary>
        
         public async Task<IActionResult> OnPostAddCartProduct([FromBody] AddCartDto request)
@@ -115,42 +144,42 @@ namespace WebApplication1.Pages
             };
             try
             {
-                // 1. Проверка аутентификации
+                // 1. ГЏГ°Г®ГўГҐГ°ГЄГ  Г ГіГІГҐГ­ГІГЁГґГЁГЄГ Г¶ГЁГЁ
                 if (!User.Identity.IsAuthenticated)
                 {
-                    return BadRequest(new { message = "Требуется авторизация" });
+                    return BadRequest(new { message = "Г’Г°ГҐГЎГіГҐГІГ±Гї Г ГўГІГ®Г°ГЁГ§Г Г¶ГЁГї" });
                 }
 
-                // 2. Базовая валидация
+                // 2. ГЃГ Г§Г®ГўГ Гї ГўГ Г«ГЁГ¤Г Г¶ГЁГї
                 //if (string.IsNullOrWhiteSpace(request.UserName))
                 {
-                    //return BadRequest(new { message = "Имя пользователя обязательно" });
+                    //return BadRequest(new { message = "Г€Г¬Гї ГЇГ®Г«ГјГ§Г®ГўГ ГІГҐГ«Гї Г®ГЎГїГ§Г ГІГҐГ«ГјГ­Г®" });
                 }
 
                 if (request.UserId <= 0)
                 {
-                    return BadRequest(new { message = "Некорректный ID пользователя" });
+                    return BadRequest(new { message = "ГЌГҐГЄГ®Г°Г°ГҐГЄГІГ­Г»Г© ID ГЇГ®Г«ГјГ§Г®ГўГ ГІГҐГ«Гї" });
                 }
 
-                // 3. Проверка существования пользователя
+                // 3. ГЏГ°Г®ГўГҐГ°ГЄГ  Г±ГіГ№ГҐГ±ГІГўГ®ГўГ Г­ГЁГї ГЇГ®Г«ГјГ§Г®ГўГ ГІГҐГ«Гї
                 var responseUser = await _client.GetAsync(
-                    $"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.GET_USER_ID}{request.UserId}");
+                    $"{GlobalVariables.GATEWAY}{GlobalVariables.GET_USER_ID}{request.UserId}");
 
                 if (!responseUser.IsSuccessStatusCode)
                 {
-                    return BadRequest(new { message = "Пользователь с указанным ID не найден" });
+                    return BadRequest(new { message = "ГЏГ®Г«ГјГ§Г®ГўГ ГІГҐГ«Гј Г± ГіГЄГ Г§Г Г­Г­Г»Г¬ ID Г­ГҐ Г­Г Г©Г¤ГҐГ­" });
                 }
 
-                // 4. Проверка соответствия данных
+                // 4. ГЏГ°Г®ГўГҐГ°ГЄГ  Г±Г®Г®ГІГўГҐГІГ±ГІГўГЁГї Г¤Г Г­Г­Г»Гµ
                 var responseBody = await responseUser.Content.ReadAsStringAsync();
                 var item = JsonSerializer.Deserialize<UserEasyDto>(responseBody, options);
 
                 //if (item.Id != request.UserId || item.Login != request.UserName)
                 {
-                    //return BadRequest(new { message = "ID или логин пользователя не совпадают. Пользователя не найдено!" });
+                    //return BadRequest(new { message = "ID ГЁГ«ГЁ Г«Г®ГЈГЁГ­ ГЇГ®Г«ГјГ§Г®ГўГ ГІГҐГ«Гї Г­ГҐ Г±Г®ГўГЇГ Г¤Г ГѕГІ. ГЏГ®Г«ГјГ§Г®ГўГ ГІГҐГ«Гї Г­ГҐ Г­Г Г©Г¤ГҐГ­Г®!" });
                 }
 
-                // 5. Добавление менеджера
+                // 5. Г„Г®ГЎГ ГўГ«ГҐГ­ГЁГҐ Г¬ГҐГ­ГҐГ¤Г¦ГҐГ°Г 
                 _client.DefaultRequestHeaders.Authorization =
                     new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
 
@@ -160,7 +189,7 @@ namespace WebApplication1.Pages
                 addCartDto.Discount = request.Discount;
                 addCartDto.UserId = request.UserId;
                 addCartDto.Price = request.Price;
-                var response = await _client.PostAsJsonAsync($"{GlobalVariables.GETWAY_OCELOT}{GlobalVariables.POST_ADD_CART}", addCartDto);
+                var response = await _client.PostAsJsonAsync($"{GlobalVariables.GATEWAY}{GlobalVariables.POST_ADD_CART}", addCartDto);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -171,7 +200,80 @@ namespace WebApplication1.Pages
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = $"Произошла ошибка: {ex.Message}" });
+                return BadRequest(new { message = $"ГЏГ°Г®ГЁГ§Г®ГёГ«Г  Г®ГёГЁГЎГЄГ : {ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// Г‡Г ГЈГ°ГіГ§ГЄГ  ГЁГ­ГґГ®Г°Г¬Г Г¶ГЁГЁ Г® ГІГ®ГўГ Г°ГҐ
+        /// </summary>
+        private async Task<object> LoadInfoProduct(string id)
+        {
+            using var apiClient = new ConnectServer();
+            var products = await apiClient.GetAsync<ProductDto>(GlobalVariables.GET_PRODUCT_ID + id);
+            return new
+            {
+                Id = products.Data.ProductId,
+                IdShop = products.Data.ShopId,
+                products.Data.ClusterId,
+                NameProduct = products.Data.NameProduct,
+                Description = products.Data.Description,
+                Price = products.Data.Price,
+                products.Data.Barcode,
+                ModelNumber = products.Data.ModelNumber,
+                ImageUrl = "/images/product.jpg",
+                Amount = 12
+            };
+        }
+
+        public async Task<JsonResult> OnGetComments(string productId)
+        {
+            _logger.LogDebug("Trying to load comments for product: " + productId);
+            using var client = _httpClientFactory.CreateClient();
+            var response = await client.GetAsync($"{GlobalVariables.GATEWAY}{GlobalVariables.GET_COMMENTS_BY_PRODUCT}{productId}");
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation($"Failed to load comments: ");
+                return new JsonResult(new { error = "Error" });
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            _logger.LogDebug("Comments response:" + content);
+            var comments = JsonSerializer.Deserialize<CommentDto[]>(content, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+            });
+            return new JsonResult(comments);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<JsonResult> OnPostAddComment([FromBody] AddCommentDto dto)
+        {
+            try
+            {
+                _logger.LogDebug("Trying to add comment");
+                using var client = _httpClientFactory.CreateClient();
+                client.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue(_authHeaderValue, Request.Cookies[_jwtCookieName]);
+                var request = new HttpRequestMessage(HttpMethod.Post,
+                    $"{GlobalVariables.GATEWAY}{GlobalVariables.ADD_COMMENT}")
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(dto), Encoding.UTF8, "application/json")
+                };
+
+                var response = await client.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation("Api rejected add comment request");
+                    return new JsonResult(new { success = false, error = await response.Content.ReadAsStringAsync() });
+                }
+                _logger.LogInformation("New comment created successfuly");
+                return new JsonResult(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception occurred on adding comment");
+                return new JsonResult(new { success = false, error = ex.Message });
             }
         }
     }

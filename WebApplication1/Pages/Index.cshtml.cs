@@ -1,24 +1,19 @@
+using ClusterService;
+using GlobalVariablesRP;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Model.Product;
-using Model.Cluster;
-using AuthService.Dto;
-using GlobalVariablesRP;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using Microsoft.Extensions.Configuration;
-using WebApplication1.Model;
-using ClusterService;
-using System.Collections.Generic;
-using WebApplication1.Model.Product.ProductDto;
 using System.Text.RegularExpressions;
+using WebApplication1.Model.Product.ProductDto;
 
 namespace WebApplication1.Pages
 {
     public class IndexModel : PageModel
     {
         private readonly HttpClient _client;
-     
+
         public string Message { get; }
 
         private readonly ILogger<IndexModel> _logger;
@@ -26,16 +21,19 @@ namespace WebApplication1.Pages
 
         public IndexModel(IConfiguration configuration, IHttpClientFactory clientFactory, ILogger<IndexModel> logger)
         {
-           
+
             _client = clientFactory.CreateClient();
-            _client.BaseAddress = new Uri(GlobalVariables.GETWAY_OCELOT);
+            _client.BaseAddress = new Uri(GlobalVariables.GATEWAY);
             _logger = logger;
             Message = "Время:";
         }
 
-     
 
-        public string PrintTime() => DateTime.Now.ToLongTimeString();
+
+        public string PrintTime()
+        {
+            return DateTime.Now.ToLongTimeString();
+        }
 
         public void OnGet()
         {
@@ -66,12 +64,12 @@ namespace WebApplication1.Pages
             };
             List<ProductDto> products1 = new List<ProductDto>();
 
-            
+
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
 
             var response = await _client.GetAsync(
-                $"{GlobalVariables.GETWAY_OCELOT}" +
-                $"{GlobalVariables.GET_SEARCH_KEYWORD_CLUSTER}{query}"); 
+                $"{GlobalVariables.GATEWAY}" +
+                $"{GlobalVariables.GET_SEARCH_KEYWORD_CLUSTER}{query}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -93,15 +91,15 @@ namespace WebApplication1.Pages
                         PropertyNameCaseInsensitive = true,
                         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping // Важно!
                     };
-                    foreach(var item in items)
+                    foreach (var item in items)
                     {
                         var responseProducts = await _client.GetAsync(
-                      $"{GlobalVariables.GETWAY_OCELOT}" +
+                      $"{GlobalVariables.GATEWAY}" +
                       $"{GlobalVariables.GET_PRODUCTS_BY_CLUSTER}{item.Id}");
                         if (responseProducts.IsSuccessStatusCode)
                         {
                             string responseBodyProduct = await responseProducts.Content.ReadAsStringAsync();
-                             responseBody = System.Web.HttpUtility.HtmlDecode(responseBodyProduct);
+                            responseBody = System.Web.HttpUtility.HtmlDecode(responseBodyProduct);
                             //проблема с сиволами поэтому вот код выше который преобразует это чудо в человеческий язык
                             // Далее десериализация JSON 
                             var itemsProducts = JsonSerializer.Deserialize<List<ProductDto>>(responseBody, options);
@@ -124,9 +122,9 @@ namespace WebApplication1.Pages
                      .ToList();
                     return new JsonResult(result);
                 }
-                catch (Exception ex) 
+                catch (Exception ex)
                 {
-                
+
                 }
                 return new JsonResult("");
             }
@@ -142,7 +140,7 @@ namespace WebApplication1.Pages
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
 
             var response = await _client.GetAsync(
-                $"{GlobalVariables.GETWAY_OCELOT}" +
+                $"{GlobalVariables.GATEWAY}" +
                 $"{GlobalVariables.GET_CLUSTER}"); //Объект не нужен, так как передаём jwt токен
             if (response.IsSuccessStatusCode)
             {
@@ -152,12 +150,12 @@ namespace WebApplication1.Pages
                 // Далее десериализация JSON 
                 var items = JsonSerializer.Deserialize<List<ClusterDto>>(responseBody);
 
-                var result = items.Select(item => new 
+                var result = items.Select(item => new
                 {
                     Id = item.Id,
                     Name = item.Name,
                     ParentId = item.ParentId,
-                 
+
                 })
                  .ToList();
                 return new JsonResult(result);
@@ -165,7 +163,7 @@ namespace WebApplication1.Pages
             return new JsonResult("");
         }
 
-       
+
         /// <summary>
         /// Получить продукты по id кластеру
         /// </summary>
@@ -181,12 +179,12 @@ namespace WebApplication1.Pages
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping // Важно!
             };
             var responseProducts = await _client.GetAsync(
-               $"{GlobalVariables.GETWAY_OCELOT}" +
+               $"{GlobalVariables.GATEWAY}" +
                $"{GlobalVariables.GET_PRODUCTS_BY_CLUSTER}{categoryId}");
             if (responseProducts.IsSuccessStatusCode)
             {
                 string responseBodyProduct = await responseProducts.Content.ReadAsStringAsync();
-                var  responseBody = System.Web.HttpUtility.HtmlDecode(responseBodyProduct);
+                var responseBody = System.Web.HttpUtility.HtmlDecode(responseBodyProduct);
                 //проблема с сиволами поэтому вот код выше который преобразует это чудо в человеческий язык
                 // Далее десериализация JSON 
                 var itemsProducts = JsonSerializer.Deserialize<List<ProductDto>>(responseBody, options);
@@ -199,25 +197,25 @@ namespace WebApplication1.Pages
 
 
             var response = await _client.GetAsync(
-                $"{GlobalVariables.GETWAY_OCELOT}" +
+                $"{GlobalVariables.GATEWAY}" +
                 $"{GlobalVariables.GET_SERCH_CHILDREN_CLUSTER}{categoryId}");
-          
+
             if (response.IsSuccessStatusCode)
             {
                 string responseBody = await response.Content.ReadAsStringAsync();
                 // Далее десериализация JSON 
                 var items = JsonSerializer.Deserialize<List<ClusterDto>>(responseBody);
 
-               
 
-               
 
-                foreach (var item in items) 
+
+
+                foreach (var item in items)
                 {
-                     responseProducts = await _client.GetAsync(
-                  $"{GlobalVariables.GETWAY_OCELOT}" +
-                  $"{GlobalVariables.GET_PRODUCTS_BY_CLUSTER}{item.Id}");
-                    
+                    responseProducts = await _client.GetAsync(
+                 $"{GlobalVariables.GATEWAY}" +
+                 $"{GlobalVariables.GET_PRODUCTS_BY_CLUSTER}{item.Id}");
+
                     if (response.IsSuccessStatusCode)
                     {
                         string responseBodyProduct = await responseProducts.Content.ReadAsStringAsync();
@@ -225,13 +223,13 @@ namespace WebApplication1.Pages
                         //проблема с сиволами поэтому вот код выше который преобразует это чудо в человеческий язык
                         // Далее десериализация JSON 
                         var itemsProducts = JsonSerializer.Deserialize<List<ProductDto>>(responseBody, options);
-                       
-                       
+
+
                         products1.AddRange(itemsProducts);
 
                     }
                 }
-        
+
             }
             var distinctItems = products1.GroupBy(x => x.ProductId).Select(y => y.First());
             var result = distinctItems.Select(item => new Product
@@ -244,7 +242,7 @@ namespace WebApplication1.Pages
             })
              .ToList();
             return new JsonResult(result);
-           
+
         }
 
 
