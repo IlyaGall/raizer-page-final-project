@@ -74,7 +74,6 @@
         }
 
         function renderOrders(orders) {
-
             const container = document.getElementById('ordersList');
 
             if (!container) return;
@@ -89,7 +88,6 @@
                     <table class="table table-hover">
                         <thead class="table-light">
                             <tr>
-                                <th>Стоимость</th>
                                 <th>Количество позиций</th>
                                 <th>Дата заказа</th>
                                 <th>Дата доставки</th>
@@ -104,14 +102,13 @@
             orders.forEach(order => {
                 html += `
                     <tr>
-                        <td>${order.price ? `${order.price} ₽` : 'Не указана'}</td>
                         <td>${order.count || 'Не указано'}</td>
-                        <td>${order.datecreated || 'Не указана'}</td>
-                        <td>${order.arrivedate || 'Не указана'}</td>
-                        <td>${order.shippingmethod || 'Не указан'}</td>
-                        <td>${order.arriveaddress || 'Не указан'}</td>
-                        <td>${order.orderstatus || 'Не указан'}</td>
-                        <td>${order.dateorderstatus || 'Не указана'}</td>
+                        <td>${order.dateCreated || 'Не указана'}</td>
+                        <td>${order.arriveDate || 'Не указана'}</td>
+                        <td>${order.shippingMethod || 'Не указан'}</td>
+                        <td>${order.arriveAddress || 'Не указан'}</td>
+                        <td>${order.orderStatus || 'Не указан'}</td>
+                        <td>${order.dateOrderStatus || 'Не указана'}</td>
                         <td>
                             <div class="btn-group btn-group-sm">
                                 <button class="btn btn-outline-primary edit-order"

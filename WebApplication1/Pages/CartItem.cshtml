@@ -143,7 +143,11 @@
             loadProducts();
 
             // Обработчики кнопок
-            document.getElementById('saveOrderBtn').addEventListener('click', addOrder);
+            document.getElementById('saveOrderBtn').addEventListener('click', function () {
+                addOrder();
+
+                $('#editProductModal').modal('hide');
+            });
 
             document.getElementById('updateProductBtn').addEventListener('click', function () {
                 const idcart = document.getElementById('editId').value;
@@ -201,9 +205,9 @@
             console.log('7+');
 
             const productData = {
-                shippingMethodId: document.getElementById('orderShippingMethodId') || 0,
-                paymentMethodId: document.getElementById('orderPaymentMethodId') || 0,
-                address: document.getElementById('orderAddress').value
+                shippingMethod: document.getElementById('orderShippingMethodId') || 0,
+                paymentMethod: document.getElementById('orderPaymentMethodId') || 0,
+                arriveAddress: document.getElementById('orderAddress').value
             };
             console.log('6+');
             fetch('?handler=CreateOrder', {

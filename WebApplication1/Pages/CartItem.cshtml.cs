@@ -33,7 +33,7 @@ namespace WebApplication1.Pages
         public async Task OnGetAsync()
         {
             var response = await _client.GetAsync(
-                $"{GlobalVariables.GATEWAY}" +
+                _client.BaseAddress +
                 $"{GlobalVariables.GET_INFO_SHOP}{Id}");
 
             if (response.IsSuccessStatusCode)
@@ -69,8 +69,9 @@ namespace WebApplication1.Pages
         {
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
             var responseUser = await _client.GetAsync(
-                $"{GlobalVariables.GATEWAY}" +
-                $"{GlobalVariables.GET_INFO_CART}");
+            _client.BaseAddress +
+            $"{GlobalVariables.GET_INFO_CART}");
+            //"https://localhost:7175/api/Cart/GetCartUser");
 
             if (responseUser.IsSuccessStatusCode)
             {
@@ -91,8 +92,9 @@ namespace WebApplication1.Pages
                 {
                     using var apiClient = new ConnectServer();
                     var item = await apiClient.GetAsync<ProductDto>(
-                        $"{GlobalVariables.GATEWAY}" +
+                        _client.BaseAddress +
                         $"{GlobalVariables.GET_PRODUCT_ID}{cart.ProductId}");
+                        //$"https://localhost:7186/api/Product/GetCartUser?id={cart.ProductId}");
 
                     if (item == null) continue;
 
@@ -136,7 +138,8 @@ namespace WebApplication1.Pages
 
                 var request = new HttpRequestMessage(
                     HttpMethod.Delete,
-                    $"{GlobalVariables.GATEWAY}{GlobalVariables.DELETE_PRODUCT_CART}")
+                    _client.BaseAddress +
+                    $"{GlobalVariables.DELETE_PRODUCT_CART}")
                 {
                     Content = new StringContent(
                     JsonSerializer.Serialize(deleteDto),
@@ -177,7 +180,8 @@ namespace WebApplication1.Pages
 
                 var request = new HttpRequestMessage(
                     HttpMethod.Delete,
-                    $"{GlobalVariables.GATEWAY}{GlobalVariables.DELETE_ALL_PRODUCT_CART}")
+                    _client.BaseAddress +
+                    $"{GlobalVariables.DELETE_ALL_PRODUCT_CART}")
                 {
                     Content = new StringContent(
                     JsonSerializer.Serialize(deleteDto),
@@ -221,7 +225,7 @@ namespace WebApplication1.Pages
             {
                 _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
                 var response = await _client.PutAsJsonAsync(
-                    $"{GlobalVariables.GATEWAY}" +
+                    _client.BaseAddress +
                     $"{GlobalVariables.PUT_CART_UPDATE}",
                     request);
 
@@ -266,11 +270,10 @@ namespace WebApplication1.Pages
                 }
 
                 _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
-
                 var response = await _client.PostAsJsonAsync(
-
-                    $"{GlobalVariables.GATEWAY}{GlobalVariables.POST_ADD_PRODUCT}",
-
+                        _client.BaseAddress +
+                        $"{GlobalVariables.POST_ADD_ORDER}",
+                        //"https://localhost:7042/api/Order/AddOrder",
                     product,
                     options);
 
