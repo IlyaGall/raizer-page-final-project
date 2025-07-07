@@ -35,8 +35,12 @@ namespace WebApplication1.Pages
         {
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Request.Cookies["JWTToken"]);
             var responseUser = await _client.GetAsync(
-                $"{GlobalVariables.GATEWAY}" +
-                $"{GlobalVariables.GET_INFO_ALL_ORDER}");
+               "https://localhost:7042/api/Order/GetAllOrderUser");
+
+            var dsdsds = await _client.GetAsync(
+                      $"https://localhost:7042/api/Order/1");
+
+
 
             if (responseUser.IsSuccessStatusCode)
             {

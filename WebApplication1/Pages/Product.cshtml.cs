@@ -223,6 +223,7 @@ namespace WebApplication1.Pages
                 addCartDto.Discount = request.Discount;
                 addCartDto.UserId = request.UserId;
                 addCartDto.Price = request.Price;
+                
                 var response = await _client.PostAsJsonAsync($"{GlobalVariables.GATEWAY}{GlobalVariables.POST_ADD_CART}", addCartDto);
 
                 if (response.IsSuccessStatusCode)
